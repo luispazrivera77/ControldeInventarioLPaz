@@ -1,11 +1,11 @@
 :root {
-  --fondo: #1B1F23;
-  --panel: #24292E;
-  --texto: #E6EDF3;
-  --texto-sec: #9DA7B1;
-  --primario: #FF6B35;
+  --fondo: #121417;
+  --panel: linear-gradient(145deg, #1E2227, #2A2F35);
+  --texto: #F5F7FA;
+  --texto-sec: #AAB4BE;
+  --primario: linear-gradient(90deg, #FF6B35, #FF8E53);
   --secundario: #4CB944;
-  --alerta: #D7263D;
+  --alerta: #E63946;
   --borde: #30363D;
 }
 
@@ -17,7 +17,7 @@ body {
 }
 
 .topbar {
-  background: var(--panel);
+  background: #1E2227;
   padding: 10px;
   display: flex;
   justify-content: space-between;
@@ -37,19 +37,24 @@ body {
 .card {
   background: var(--panel);
   border: 1px solid var(--borde);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .btn {
   background: var(--primario);
-  color: var(--texto);
-  border: 1px solid var(--borde);
-  padding: 6px 10px;
+  color: #fff;
+  border: none;
   border-radius: 6px;
+  padding: 8px 14px;
   cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-.btn:hover { background: var(--secundario); }
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
 .btn.ghost { background: transparent; color: var(--texto-sec); }
 .btn.danger { background: var(--alerta); }
 
@@ -61,12 +66,24 @@ body {
   border-radius: 6px;
   padding: 10px;
   margin-bottom: 10px;
+  background: #1E2227;
 }
 .prod-header { display: flex; justify-content: space-between; align-items: center; }
 .status-dot {
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 14px; height: 14px; border-radius: 50%;
 }
 .status-green { background: var(--secundario); }
-.status-yellow { background: gold; }
+.status-yellow { background: #FFD166; }
 .status-red { background: var(--alerta); }
-.prod-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+.stock-bar {
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+.stock-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--secundario);
+}
