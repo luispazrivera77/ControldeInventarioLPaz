@@ -19,6 +19,12 @@ class InventoryManager {
     this.renderHistory();
     this.initCharts();
     this.updateStats();
+    
+    // Establecer el tema en el selector
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+      themeSelect.value = this.currentTheme;
+    }
   }
 
   // Event Listeners
