@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="topbar">
-    <h1>StockSense</h1>
+    <h1>📦 StockSense</h1>
     <div class="controls">
       <input id="searchInput" type="text" placeholder="Buscar productos..." />
       <select id="filterAlert">
@@ -20,7 +20,7 @@
         <option value="oscuro">Oscuro minimalista</option>
         <option value="claro">Claro</option>
       </select>
-      <button id="addProductBtn" class="btn">Nuevo producto</button>
+      <button id="addProductBtn" class="btn primary">➕ Nuevo</button>
     </div>
   </header>
 
@@ -49,7 +49,7 @@
         <label>Foto</label>
         <input type="file" id="prodPhoto" accept="image/*" />
         <div class="form-actions">
-          <button type="submit" class="btn primary">Guardar</button>
+          <button type="submit" class="btn primary">💾 Guardar</button>
           <button type="button" id="cancelBtn" class="btn ghost">Cancelar</button>
         </div>
       </form>
@@ -83,11 +83,12 @@
         <span class="status-dot"></span>
       </div>
       <p class="prod-stock"></p>
+      <div class="stock-bar"><div class="stock-fill"></div></div>
       <div class="prod-actions">
-        <button class="btn ghost edit">Editar</button>
-        <button class="btn ghost moveIn">Entrada</button>
-        <button class="btn ghost moveOut">Salida</button>
-        <button class="btn danger delete">Eliminar</button>
+        <button class="btn ghost edit">✏️ Editar</button>
+        <button class="btn ghost moveIn">⬆️ Entrada</button>
+        <button class="btn ghost moveOut">⬇️ Salida</button>
+        <button class="btn danger delete">🗑 Eliminar</button>
       </div>
     </article>
   </template>
