@@ -103,5 +103,4 @@ body {
   display: grid;
   gap: 12px;
 }
-@media (min-width: 700px) {
-  .form-row
+@media (min-width: 700px
