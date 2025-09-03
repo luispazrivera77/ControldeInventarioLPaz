@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StockSense - Inventario Inteligente</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>StockSense</h1>
+    <div class="controls">
+      <input id="searchInput" type="text" placeholder="Buscar productos..." />
+      <select id="filterAlert">
+        <option value="all">Todos</option>
+        <option value="alert">En alerta</option>
+      </select>
+      <select id="themeSelect">
+        <option value="acero">Acero & Energía</option>
+        <option value="oscuro">Oscuro minimalista</option>
+        <option value="claro">Claro</option>
+      </select>
+      <button id="addProductBtn" class="btn">Nuevo producto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Formulario producto -->
+    <section id="formContainer" class="card hidden">
+      <h2 id="formTitle">Nuevo producto</h2>
+      <form id="productForm">
+        <input type="hidden" id="productIndex" />
+        <label>Nombre</label>
+        <input type="text" id="prodName" required />
+        <label>Código</label>
+        <input type="text" id="prodCode" />
+        <label>Categoría</label>
+        <input type="text" id="prodCategory" />
+        <label>Proveedor</label>
+        <input type="text" id="prodSupplier" />
+        <label>Stock actual</label>
+        <input type="number" id="prodStock" required />
+        <label>Stock mínimo</label>
+        <input type="number" id="prodMin" required />
+        <label>Precio compra</label>
+        <input type="number" id="prodBuy" />
+        <label>Precio venta</label>
+        <input type="number" id="prodSell" />
+        <label>Foto</label>
+        <input type="file" id="prodPhoto" accept="image/*" />
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Guardar</button>
+          <button type="button" id="cancelBtn" class="btn ghost">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Lista de productos -->
+    <section id="productList" class="card">
+      <h2>Inventario</h2>
+      <div id="products" class="products"></div>
+      <div id="emptyState" class="empty">Sin productos aún.</div>
+    </section>
+
+    <!-- Historial -->
+    <section id="historySection" class="card">
+      <h2>Historial de movimientos</h2>
+      <div id="history"></div>
+    </section>
+
+    <!-- Reportes -->
+    <section id="reportsSection" class="card">
+      <h2>Reportes</h2>
+      <canvas id="stockChart"></canvas>
+      <canvas id="salesChart"></canvas>
+    </section>
+  </main>
+
+  <template id="productCardTpl">
+    <article class="product-card">
+      <div class="prod-header">
+        <h3 class="prod-name"></h3>
+        <span class="status-dot"></span>
+      </div>
+      <p class="prod-stock"></p>
+      <div class="prod-actions">
+        <button class="btn ghost edit">Editar</button>
+        <button class="btn ghost moveIn">Entrada</button>
+        <button class="btn ghost moveOut">Salida</button>
+        <button class="btn danger delete">Eliminar</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
