@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="topbar">
-    <h1>📦 Inventario Inteligente</h1>
+    <h1>📦 StockSense</h1>
     <div class="controls">
       <input id="searchInput" type="text" placeholder="Buscar productos..." />
       <select id="filterAlert">
@@ -30,24 +30,57 @@
       <h2 id="formTitle">Nuevo producto</h2>
       <form id="productForm">
         <input type="hidden" id="productIndex" />
-        <label>Nombre</label>
-        <input type="text" id="prodName" required />
-        <label>Código</label>
-        <input type="text" id="prodCode" />
-        <label>Categoría</label>
-        <input type="text" id="prodCategory" />
-        <label>Proveedor</label>
-        <input type="text" id="prodSupplier" />
-        <label>Stock actual</label>
-        <input type="number" id="prodStock" required />
-        <label>Stock mínimo</label>
-        <input type="number" id="prodMin" required />
-        <label>Precio compra</label>
-        <input type="number" id="prodBuy" />
-        <label>Precio venta</label>
-        <input type="number" id="prodSell" />
-        <label>Foto</label>
-        <input type="file" id="prodPhoto" accept="image/*" />
+
+        <div class="form-group">
+          <h3>Datos básicos</h3>
+          <div class="form-row">
+            <div>
+              <label>Nombre</label>
+              <input type="text" id="prodName" required />
+            </div>
+            <div>
+              <label>Código</label>
+              <input type="text" id="prodCode" />
+            </div>
+            <div>
+              <label>Categoría</label>
+              <input type="text" id="prodCategory" />
+            </div>
+            <div>
+              <label>Proveedor</label>
+              <input type="text" id="prodSupplier" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <h3>Stock y precios</h3>
+          <div class="form-row">
+            <div>
+              <label>Stock actual</label>
+              <input type="number" id="prodStock" required />
+            </div>
+            <div>
+              <label>Stock mínimo</label>
+              <input type="number" id="prodMin" required />
+            </div>
+            <div>
+              <label>Precio compra</label>
+              <input type="number" id="prodBuy" />
+            </div>
+            <div>
+              <label>Precio venta</label>
+              <input type="number" id="prodSell" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <h3>Multimedia</h3>
+          <label>Foto</label>
+          <input type="file" id="prodPhoto" accept="image/*" />
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn primary">💾 Guardar</button>
           <button type="button" id="cancelBtn" class="btn ghost">Cancelar</button>
