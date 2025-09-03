@@ -85,5 +85,23 @@ body {
 .stock-fill {
   height: 100%;
   border-radius: 4px;
-  background: var(--secundario);
 }
+
+.form-group {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 12px;
+}
+.form-group h3 {
+  margin-top: 0;
+  color: var(--primario);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.form-row {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 700px) {
+  .form-row
