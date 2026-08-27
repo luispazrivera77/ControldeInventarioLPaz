@@ -3,16 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge Mini - Gestor de Datos Dinámico</title>
+    <title>DataForge Mini - Gestor Dinámico de Datos</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Librería SheetJS para leer archivos Excel (.xlsx, .xls) y CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>DataForge Mini</h1>
-        <p class="subtitle">Crea esquemas personalizados, llena matrices dinámicas y deriva bases de datos secundarias estilo AppSheet.</p>
+        <p class="subtitle">Crea esquemas, importa desde Excel, llena matrices dinámicas y deriva sub-bases estilo AppSheet.</p>
         
-        <!-- Sección 1: Definir Estructura de la Base de Datos Principal -->
-        <section id="schema-builder">
+        <!-- Sección 0: Importar desde Excel / CSV (Opcional) -->
+        <section id="import-section" class="card">
+            <h2>0. ¿Tienes un Excel? (Opcional)</h2>
+            <p>Sube un archivo para autodetectar columnas, hojas y datos instantáneamente:</p>
+            <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv">
+            <div id="sheet-selector-container" class="hidden" style="margin-top: 10px;">
+                <label for="sheet-select">Selecciona la hoja:</label>
+                <select id="sheet-select"></select>
+                <button id="load-sheet-btn" class="btn-secondary">Cargar Hoja</button>
+            </div>
+        </section>
+
+        <!-- Sección 1: Definir Estructura de la Base Principal -->
+        <section id="schema-builder" class="card">
             <h2>1. Definir Estructura de la Base Principal</h2>
             <div class="form-group">
                 <input type="text" id="col-name" placeholder="Nombre de columna (ej. Producto, Stock)">
@@ -22,7 +36,7 @@
                     <option value="date">Fecha</option>
                     <option value="boolean">Booleano (Sí/No)</option>
                 </select>
-                <button id="add-col-btn">Añadir Columna</button>
+                <button id="add-col-btn" class="btn-primary">Añadir Columna</button>
             </div>
             
             <div class="schema-preview">
@@ -32,29 +46,29 @@
                 </ul>
             </div>
             
-            <button id="create-table-btn" class="btn-primary">Generar Matriz de Datos (Filas x Columnas)</button>
+            <button id="create-table-btn" class="btn-primary" style="margin-top: 15px;">Generar Matriz de Datos</button>
         </section>
 
         <!-- Sección 2: Vista de Llenado de Datos -->
-        <section id="data-view" class="hidden">
-            <h2>2. Llenado de Datos (Base Principal)</h2>
+        <section id="data-view" class="card hidden">
+            <h2>2. Llenado y Visualización de Datos</h2>
             <div class="table-responsive">
                 <div id="table-container"></div>
             </div>
-            <div class="actions-row">
+            <div class="actions-row" style="margin-top: 15px;">
                 <button id="add-row-btn" class="btn-secondary">Añadir Fila</button>
                 <button id="open-pivot-btn" class="btn-success">Derivar Nueva Base de Datos (Pivote)</button>
             </div>
         </section>
 
         <!-- Sección 3: Motor de Derivación / Pivotes -->
-        <section id="pivot-view" class="hidden">
+        <section id="pivot-view" class="card hidden">
             <h2>3. Motor de Derivación (Pivotes y Sub-bases)</h2>
             <div class="pivot-controls">
                 <p>Registros detectados en la base principal: <strong id="record-count">0</strong></p>
                 
                 <div class="form-group">
-                    <label for="pivot-filter-col">Filtrar por Columna:</label>
+                    <label for="pivot-filter-col" style="align-self: center;">Filtrar por Columna:</label>
                     <select id="pivot-filter-col"></select>
                     <input type="text" id="pivot-filter-val" placeholder="Valor condición (ej. Activo, 100)">
                 </div>
