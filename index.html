@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge Mobile</title>
+    <title>DataForge Form Builder Mobile</title>
     <style>
         :root {
             --bg: #050505;
@@ -12,8 +12,10 @@
             --surface-hover: #262733;
             --border: #2a2b38;
             --accent: #3b82f6;
+            --accent-hover: #2563eb;
             --text: #f8fafc;
             --text-dim: #94a3b8;
+            --danger: #ef4444;
         }
 
         body {
@@ -28,7 +30,7 @@
             overflow: hidden;
         }
 
-        /* Celular Estilizado (Mockup Fiel) */
+        /* Celular Estilizado */
         .phone-frame {
             width: 360px;
             height: 720px;
@@ -42,7 +44,6 @@
             position: relative;
         }
 
-        /* Notch superior del celular */
         .phone-notch {
             width: 120px;
             height: 18px;
@@ -66,51 +67,73 @@
 
         .screen.hidden { display: none; }
 
-        /* Inicio */
-        .hero {
-            flex: 1;
+        /* Títulos y Contenedores */
+        h2 {
+            font-size: 18px;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        input, select {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus { border-color: var(--accent); }
+
+        /* Pantalla 1: Constructor de Campos */
+        .builder-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 25px;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .field-builder-row {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: 0.2s;
             text-align: center;
         }
 
-        .hero h1 {
-            font-size: 24px;
-            margin: 0;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
+        .btn:hover { background: var(--surface-hover); border-color: var(--accent); }
+        .btn-primary { background: var(--accent); border: none; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.1); }
 
-        .btn-upload {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 16px 24px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .btn-upload:hover { border-color: var(--accent); background: var(--surface-hover); }
-
-        /* Header Formulario */
-        .form-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 12px;
-            color: var(--text-dim);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-        }
-
+        /* Pantalla 2: Vista de Registros / Formulario Interactivo */
         .form-card {
             flex: 1;
             display: flex;
@@ -122,7 +145,6 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
-            position: relative;
         }
 
         .form-field label {
@@ -133,47 +155,6 @@
             letter-spacing: 0.5px;
         }
 
-        .form-field input {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-field input:focus { border-color: var(--accent); }
-
-        /* Lista Desplegable Estilizada (Autocomplete para Obra) */
-        .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border: 1px solid var(--accent);
-            border-radius: 10px;
-            max-height: 140px;
-            overflow-y: auto;
-            z-index: 20;
-            display: none;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            margin-top: 4px;
-        }
-
-        .dropdown-item {
-            padding: 10px 12px;
-            font-size: 13px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .dropdown-item:last-child { border-bottom: none; }
-        .dropdown-item:hover { background: var(--surface-hover); color: var(--accent); }
-
-        /* Barra de Navegación */
         .nav-bar {
             display: flex;
             justify-content: space-between;
@@ -183,196 +164,224 @@
             margin-top: 10px;
         }
 
-        .nav-btn {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: 0.2s;
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
         }
-
-        .nav-btn:hover { background: var(--surface-hover); border-color: var(--accent); }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
     <div class="phone-frame">
         <div class="phone-notch"></div>
 
-        <!-- Pantalla 1: Carga -->
-        <section id="screen-home" class="screen">
-            <div class="hero">
-                <h1>DataForge</h1>
-                <label class="btn-upload">
-                    📂 Cargar Excel / CSV
-                    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" hidden>
-                </label>
+        <!-- Pantalla 1: Diseñador del Formulario -->
+        <section id="screen-builder" class="screen">
+            <h2 id="app-main-title">Nuevo Formulario</h2>
+            
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">Título del Formulario</label>
+                <input type="text" id="form-title-input" placeholder="Ej. Control de Obras" style="margin-top: 4px;">
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">Definir Campos</div>
+            
+            <div id="fields-container" class="builder-container" style="max-height: 380px; overflow-y: auto; gap: 10px;">
+                <!-- Filas dinámicas de campos -->
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                <button type="button" id="add-field-btn" class="btn">＋ Añadir otro campo</button>
+                <button type="button" id="launch-form-btn" class="btn btn-primary">Iniciar Aplicación ➔</button>
             </div>
         </section>
 
-        <!-- Pantalla 2: Formulario -->
-        <section id="screen-form" class="screen hidden">
+        <!-- Pantalla 2: Vista de Registros (Llenado tipo AppSheet) -->
+        <section id="screen-runtime" class="screen hidden">
             <div class="form-header">
+                <span id="runtime-form-title">Formulario</span>
                 <span id="record-indicator">Registro 1 de 1</span>
-                <span id="file-name-label" style="max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
             </div>
 
-            <div id="form-card" class="form-card"></div>
+            <div id="runtime-form-card" class="form-card"></div>
 
             <div class="nav-bar">
-                <button id="prev-btn" class="nav-btn">◀ Ant</button>
-                <button id="next-btn" class="nav-btn">Sig ▶</button>
+                <button id="prev-btn" class="btn">◀ Ant</button>
+                <button id="add-record-btn" class="btn">＋ Nuevo</button>
+                <button id="next-btn" class="btn">Sig ▶</button>
             </div>
+            <button id="back-to-builder" class="btn btn-danger" style="margin-top: 10px; font-size: 11px; padding: 6px;">⚙️ Modificar Estructura</button>
         </section>
     </div>
 
     <script>
-        let state = { cols: [], data: [], obrasList: [] };
-        let currentIndex = 0;
+        let formConfig = {
+            title: "Mi Formulario",
+            fields: [
+                { name: "Obra", type: "text" },
+                { name: "Fecha", type: "date" }
+            ]
+        };
 
-        const excelInput = document.getElementById('excel-file-input');
-        const screenHome = document.getElementById('screen-home');
-        const screenForm = document.getElementById('screen-form');
-        const formCard = document.getElementById('form-card');
+        let records = [{}];
+        let currentRecordIndex = 0;
+
+        const screenBuilder = document.getElementById('screen-builder');
+        const screenRuntime = document.getElementById('screen-runtime');
+        const fieldsContainer = document.getElementById('fields-container');
+        const formTitleInput = document.getElementById('form-title-input');
+        
+        const runtimeFormTitle = document.getElementById('runtime-form-title');
+        const runtimeFormCard = document.getElementById('runtime-form-card');
         const recordIndicator = document.getElementById('record-indicator');
-        const fileNameLabel = document.getElementById('file-name-label');
 
-        excelInput.addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (!file) return;
+        function initBuilder() {
+            formTitleInput.value = formConfig.title;
+            renderBuilderFields();
+        }
 
-            fileNameLabel.textContent = file.name;
-            const reader = new FileReader();
+        function renderBuilderFields() {
+            fieldsContainer.innerHTML = '';
+            formConfig.fields.forEach((field, index) => {
+                const row = document.createElement('div');
+                row.className = 'field-builder-row';
+                row.innerHTML = `
+                    <div class="row-inputs">
+                        <input type="text" class="field-name" placeholder="Nombre del campo" value="${field.name}" data-index="${index}">
+                        <select class="field-type" data-index="${index}">
+                            <option value="text" ${field.type === 'text' ? 'selected' : ''}>Texto</option>
+                            <option value="number" ${field.type === 'number' ? 'selected' : ''}>Número</option>
+                            <option value="date" ${field.type === 'date' ? 'selected' : ''}>Fecha</option>
+                            <option value="email" ${field.type === 'email' ? 'selected' : ''}>Email</option>
+                            <option value="checkbox" ${field.type === 'checkbox' ? 'selected' : ''}>Sí/No</option>
+                        </select>
+                    </div>
+                    ${formConfig.fields.length > 1 ? `<button type="button" class="btn btn-danger" onclick="removeField(${index})" style="padding: 4px; font-size: 11px;">Eliminar campo</button>` : ''}
+                `;
+                fieldsContainer.appendChild(row);
+            });
 
-            reader.onload = ev => {
-                try {
-                    const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-                    const ws = wb.Sheets[wb.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            // Registrar eventos de cambio instantáneo
+            fieldsContainer.querySelectorAll('.field-name').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    formConfig.fields[e.target.dataset.index].name = e.target.value;
+                });
+            });
 
-                    if (!json.length || json.length < 2) {
-                        alert('El archivo está vacío o sin datos.');
-                        return;
-                    }
+            fieldsContainer.querySelectorAll('.field-type').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    formConfig.fields[e.target.dataset.index].type = e.target.value;
+                });
+            });
+        }
 
-                    state.cols = json[0].map(h => String(h || 'Columna'));
-                    state.data = json.slice(1).map(row => {
-                        const obj = {};
-                        state.cols.forEach((col, i) => {
-                            obj[col] = row[i] !== undefined ? row[i] : '';
-                        });
-                        return obj;
-                    });
+        window.removeField = function(index) {
+            saveBuilderState();
+            formConfig.fields.splice(index, 1);
+            renderBuilderFields();
+        };
 
-                    // Detectar si existe una columna llamada "Obra" (o similar) para alimentar la lista inteligente
-                    const obraColKey = state.cols.find(c => c.toLowerCase().includes('obra'));
-                    if (obraColKey) {
-                        const uniqueObras = [...new Set(state.data.map(r => String(r[obraColKey] || '').trim()))];
-                        state.obrasList = uniqueObras.filter(o => o !== '');
-                    }
-
-                    currentIndex = 0;
-                    renderForm();
-
-                    screenHome.classList.add('hidden');
-                    screenForm.classList.remove('hidden');
-                } catch (err) {
-                    alert('Error al leer el archivo.');
+        function saveBuilderState() {
+            formConfig.title = formTitleInput.value.trim() || "Formulario";
+            fieldsContainer.querySelectorAll('.field-builder-row').forEach((row, index) => {
+                const nameInput = row.querySelector('.field-name');
+                const typeSelect = row.querySelector('.field-type');
+                if(formConfig.fields[index]) {
+                    formConfig.fields[index].name = nameInput.value;
+                    formConfig.fields[index].type = typeSelect.value;
                 }
-            };
-            reader.readAsArrayBuffer(file);
+            });
+        }
+
+        document.getElementById('add-field-btn').addEventListener('click', () => {
+            saveBuilderState();
+            formConfig.fields.push({ name: `Campo ${formConfig.fields.length + 1}`, type: 'text' });
+            renderBuilderFields();
         });
 
-        function renderForm() {
-            if (state.data.length === 0) return;
-            const record = state.data[currentIndex];
-            
-            let html = '';
-            state.cols.forEach(col => {
-                const val = record[col] !== undefined ? record[col] : '';
-                const isObraField = col.toLowerCase().includes('obra');
+        document.getElementById('launch-form-btn').addEventListener('click', () => {
+            saveBuilderState();
+            if (formConfig.fields.length === 0) {
+                alert('Añade al menos un campo para continuar.');
+                return;
+            }
 
-                html += `<div class="form-field"><label>${col}</label>`;
-                
-                if (isObraField && state.obrasList.length > 0) {
-                    html += `
-                        <input type="text" class="input-obra" data-col="${col}" value="${val}" autocomplete="off" placeholder="Seleccionar o buscar obra...">
-                        <div class="dropdown-list"></div>
-                    `;
+            runtimeFormTitle.textContent = formConfig.title;
+            currentRecordIndex = 0;
+            if(records.length === 0) records = [{}];
+            
+            renderRuntimeForm();
+            screenBuilder.classList.add('hidden');
+            screenRuntime.classList.remove('hidden');
+        });
+
+        document.getElementById('back-to-builder').addEventListener('click', () => {
+            saveCurrentRecord();
+            screenRuntime.classList.add('hidden');
+            screenBuilder.classList.remove('hidden');
+        });
+
+        function renderRuntimeForm() {
+            const record = records[currentRecordIndex] || {};
+            let html = '';
+
+            formConfig.fields.forEach(field => {
+                const val = record[field.name] !== undefined ? record[field.name] : '';
+                html += `<div class="form-field"><label>${field.name}</label>`;
+
+                if (field.type === 'checkbox') {
+                    html += `<input type="checkbox" class="runtime-input" data-name="${field.name}" ${val ? 'checked' : ''} style="width: auto; margin-top: 5px;">`;
                 } else {
-                    html += `<input type="text" data-col="${col}" value="${val}">`;
+                    html += `<input type="${field.type}" class="runtime-input" data-name="${field.name}" value="${val}">`;
                 }
-                
                 html += `</div>`;
             });
 
-            formCard.innerHTML = html;
-            recordIndicator.textContent = `Registro ${currentIndex + 1} de ${state.data.length}`;
-            setupObraAutocomplete();
+            runtimeFormCard.innerHTML = html;
+            recordIndicator.textContent = `Registro ${currentRecordIndex + 1} de ${records.length}`;
         }
 
-        function setupObraAutocomplete() {
-            const obraInput = formCard.querySelector('.input-obra');
-            if (!obraInput) return;
-
-            const dropdown = obraInput.nextElementSibling;
-
-            function showDropdown(filterText = '') {
-                const filtered = state.obrasList.filter(o => o.toLowerCase().includes(filterText.toLowerCase()));
-                if (filtered.length === 0) {
-                    dropdown.style.display = 'none';
-                    return;
-                }
-                dropdown.innerHTML = filtered.map(item => `<div class="dropdown-item">${item}</div>`).join('');
-                dropdown.style.display = 'block';
-
-                dropdown.querySelectorAll('.dropdown-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        obraInput.value = el.textContent;
-                        dropdown.style.display = 'none';
-                        saveCurrent();
-                    });
-                });
-            }
-
-            obraInput.addEventListener('focus', () => showDropdown(obraInput.value));
-            obraInput.addEventListener('input', () => showDropdown(obraInput.value));
-
-            document.addEventListener('click', (e) => {
-                if (!obraInput.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.style.display = 'none';
-                }
-            });
-        }
-
-        function saveCurrent() {
-            if (state.data.length === 0) return;
-            const inputs = formCard.querySelectorAll('input[data-col]');
+        function saveCurrentRecord() {
+            if (records.length === 0) return;
+            const inputs = runtimeFormCard.querySelectorAll('.runtime-input');
+            const obj = {};
             inputs.forEach(input => {
-                state.data[currentIndex][input.dataset.col] = input.value;
+                obj[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
             });
+            records[currentRecordIndex] = obj;
         }
 
         document.getElementById('next-btn').addEventListener('click', () => {
-            saveCurrent();
-            if (currentIndex < state.data.length - 1) {
-                currentIndex++;
-                renderForm();
+            saveCurrentRecord();
+            if (currentRecordIndex < records.length - 1) {
+                currentRecordIndex++;
+                renderRuntimeForm();
             }
         });
 
         document.getElementById('prev-btn').addEventListener('click', () => {
-            saveCurrent();
-            if (currentIndex > 0) {
-                currentIndex--;
-                renderForm();
+            saveCurrentRecord();
+            if (currentRecordIndex > 0) {
+                currentRecordIndex--;
+                renderRuntimeForm();
             }
         });
+
+        document.getElementById('add-record-btn').addEventListener('click', () => {
+            saveCurrentRecord();
+            records.push({});
+            currentRecordIndex = records.length - 1;
+            renderRuntimeForm();
+        });
+
+        // Inicializar con dos campos por defecto
+        initBuilder();
     </script>
 </body>
 </html>
