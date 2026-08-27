@@ -212,6 +212,8 @@
     .btn-ghost-gold:hover { background: var(--gold-soft); }
     .btn-success { background: var(--success); border: none; color: #06251b; font-weight: 600; }
     .btn-danger-outline { color: var(--danger); border-color: rgba(226,104,95,0.3); }
+    .btn-danger-solid { background: var(--danger); border: none; color: #2a0805; font-weight: 600; }
+    .btn-danger-solid:hover { background: #ea8078; }
     .btn-tiny { padding: 5px 9px; font-size: 10.5px; border-radius: 8px; }
     .btn-full { width: 100%; }
     .btn-row { display: flex; gap: 8px; }
@@ -421,8 +423,8 @@
 
     .nav-bar .btn { flex: 1; }
 
-    .record-actions-row { display: flex; gap: 7px; margin-top: 8px; }
-    .record-actions-row .btn { flex: 1; font-size: 11px; }
+    .record-actions-row { display: flex; gap: 6px; margin-top: 8px; }
+    .record-actions-row .btn { flex: 1; font-size: 10.5px; padding: 9px 4px; }
 
     .action-row { display: flex; gap: 7px; margin-top: 8px; }
     .action-row .btn { flex: 1; font-size: 11.5px; }
@@ -639,6 +641,10 @@
                 <button onclick="addNewRecord()" class="btn btn-ghost-gold">
                     <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                     Nuevo
+                </button>
+                <button onclick="deleteCurrentRecord()" class="btn btn-danger-solid">
+                    <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>
+                    Eliminar
                 </button>
             </div>
 
@@ -1215,6 +1221,46 @@
         formObj.fields.forEach(f => {
             currentRecord[f.name] = f.type === 'checkbox' ? false : '';
         });
+        renderRuntime();
+    }
+
+    // ============================================================
+    // ELIMINAR REGISTRO
+    // Borra por completo el registro actual (no solo sus datos) y,
+    // en cascada, todos sus descendientes (hijos, nietos, ...) para
+    // no dejar registros huérfanos apuntando a un padre que ya no
+    // existe.
+    // ============================================================
+
+    function deleteDescendantRecords(formId, recordId) {
+        getChildForms(formId).forEach(child => {
+            const toDelete = child.data.filter(r => r._parentId === recordId);
+            toDelete.forEach(r => deleteDescendantRecords(child.id, r._id));
+            child.data = child.data.filter(r => r._parentId !== recordId);
+        });
+    }
+
+    function deleteCurrentRecord() {
+        if (!activeFormId || renderedRecordId === null) return;
+        const formObj = getForm(activeFormId);
+        const currentRecord = findRecordById(activeFormId, renderedRecordId);
+        if (!currentRecord) return;
+
+        const childCount = getChildForms(activeFormId)
+            .reduce((sum, child) => sum + child.data.filter(r => r._parentId === currentRecord._id).length, 0);
+        const warning = childCount > 0
+            ? `Este registro tiene ${childCount} registro${childCount === 1 ? '' : 's'} relacionado${childCount === 1 ? '' : 's'} que también se eliminarán. ¿Continuar?`
+            : '¿Eliminar este registro? Esta acción no se puede deshacer.';
+        if (!confirm(warning)) return;
+
+        deleteDescendantRecords(activeFormId, currentRecord._id);
+        formObj.data = formObj.data.filter(r => r._id !== currentRecord._id);
+
+        renderedRecordId = null;
+        resetDescendantIndices(activeFormId);
+        // renderRuntime() recorta el índice si quedó fuera de rango y,
+        // si la lista quedó vacía, crea automáticamente un registro en
+        // blanco (mismo comportamiento que ya existía para ese caso).
         renderRuntime();
     }
 
