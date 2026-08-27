@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge</title>
+    <title>DataForge Form Studio</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -13,7 +13,7 @@
         <nav class="dock">
             <button class="dock-btn active" data-view="home" title="Inicio">🏠</button>
             <button class="dock-btn" data-view="schema" title="Estructura">⚡</button>
-            <button class="dock-btn" data-view="data" title="Datos">📊</button>
+            <button class="dock-btn" data-view="data" title="Formularios">📋</button>
             <button class="dock-btn" data-view="pivot" title="Pivotes">🎯</button>
         </nav>
 
@@ -46,17 +46,20 @@
                     <button id="add-col-btn" class="btn icon-btn">＋</button>
                 </div>
                 <div id="columns-chips" class="chips-container"></div>
-                <button id="create-table-btn" class="btn primary-btn hidden">Generar Matriz ➔</button>
+                <button id="create-table-btn" class="btn primary-btn hidden">Generar Formularios ➔</button>
             </section>
 
-            <!-- Pantalla 3: Datos -->
+            <!-- Pantalla 3: Vista de Formulario -->
             <section id="data" class="screen hidden">
                 <div class="toolbar">
-                    <button id="add-row-btn" class="btn">＋ Fila</button>
-                    <button onclick="goTo('pivot')" class="btn primary-btn">Ir a Pivotes ➔</button>
+                    <button id="prev-row-btn" class="btn">◀</button>
+                    <span id="record-indicator" style="align-self: center; font-size: 14px; color: var(--text-dim);">0 / 0</span>
+                    <button id="next-row-btn" class="btn">▶</button>
+                    <button id="add-form-btn" class="btn primary-btn">＋ Nuevo</button>
+                    <button onclick="goTo('pivot')" class="btn">Pivotes ➔</button>
                 </div>
-                <div class="table-wrap">
-                    <div id="table-container"></div>
+                <div class="form-card-container">
+                    <div id="form-card" class="form-card"></div>
                 </div>
             </section>
 
