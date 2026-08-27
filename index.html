@@ -1,688 +1,1028 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge Multi-Form AppStudio</title>
-    <style>
-        :root {
-            --bg: #050505;
-            --phone-bg: #0f1015;
-            --surface: #1a1b22;
-            --surface-hover: #262733;
-            --border: #2a2b38;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --text: #f8fafc;
-            --text-dim: #94a3b8;
-            --danger: #ef4444;
-            --success: #10b981;
-            --purple: #8b5cf6;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge — Constructor de formularios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg-app: #06070a;
+        --bg-screen: #0b0d12;
+        --surface: #15171f;
+        --surface-2: #1d2029;
+        --surface-hover: #242835;
+        --border: #262a38;
+        --text: #f4f2ec;
+        --text-dim: #8b90a3;
+        --text-faint: #565b6e;
 
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+        --gold: #d9a653;
+        --gold-hover: #e6ba71;
+        --gold-soft: rgba(217, 166, 83, 0.14);
 
-        .phone-frame {
-            width: 360px;
-            height: 720px;
-            background: var(--phone-bg);
-            border: 6px solid #20212c;
-            border-radius: 48px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.9), inset 0 0 10px rgba(255,255,255,0.05);
-            position: relative;
-        }
+        --danger: #e2685f;
+        --success: #4fb08a;
 
-        .phone-notch {
-            width: 120px;
-            height: 18px;
-            background: #20212c;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-            align-self: center;
-            position: absolute;
-            top: 0;
-            z-index: 10;
-        }
+        /* escala de profundidad: raíz, hijo, nieto, bisnieto... (cíclica) */
+        --depth-0: #4fb3ac;
+        --depth-1: #d9a653;
+        --depth-2: #c97fa0;
+        --depth-3: #8c86d9;
 
-        .screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 30px 20px 20px 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
+        --font-display: 'Fraunces', Georgia, serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+        --font-body: 'Inter', system-ui, sans-serif;
+    }
 
-        .screen.hidden { display: none; }
+    * { box-sizing: border-box; }
 
-        h2 {
-            font-size: 16px;
-            margin: 0 0 12px 0;
-            font-weight: 600;
-        }
+    body {
+        margin: 0;
+        font-family: var(--font-body);
+        background: var(--bg-app);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
 
-        input, select {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            outline: none;
-            width: 100%;
-            box-sizing: border-box;
-        }
+    .phone-frame {
+        width: 366px;
+        height: 728px;
+        background: linear-gradient(160deg, #26241f, #17161a 55%, #201d17);
+        border-radius: 52px;
+        padding: 8px;
+        box-shadow: 0 30px 70px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(255,255,255,0.04);
+        position: relative;
+    }
 
-        input:focus, select:focus { border-color: var(--accent); }
+    .phone-cam {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #050505;
+        box-shadow: 0 0 0 3px rgba(255,255,255,0.03);
+        z-index: 10;
+    }
 
-        .builder-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1;
-            max-height: 220px;
-            overflow-y: auto;
-        }
+    .phone-screen {
+        width: 100%;
+        height: 100%;
+        background:
+            radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0) 0 0/22px 22px,
+            var(--bg-screen);
+        border-radius: 44px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
 
-        .field-builder-row {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+    .screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 38px 20px 18px 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        min-height: 0;
+    }
 
-        .row-inputs {
-            display: flex;
-            gap: 8px;
-        }
+    .screen.hidden { display: none; }
 
-        .btn {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            text-align: center;
-            transition: 0.2s;
-        }
+    .brand-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
 
-        .btn:hover { background: var(--surface-hover); border-color: var(--accent); }
-        .btn-primary { background: var(--accent); border: none; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-success { background: var(--success); border: none; }
-        .btn-danger { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+    .brand {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 19px;
+        letter-spacing: -0.01em;
+    }
 
-        .app-launcher-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1;
-            overflow-y: auto;
-            margin-top: 5px;
-        }
+    .brand small {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--gold);
+        display: block;
+        letter-spacing: 0.12em;
+        margin-top: 2px;
+        font-weight: 500;
+    }
 
-        .app-icon-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+    h2 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        margin: 0 0 4px 0;
+        font-weight: 600;
+    }
 
-        .app-icon-card:hover {
-            background: var(--surface-hover);
-            border-color: var(--accent);
-        }
+    .subtitle {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin: 0 0 16px 0;
+        line-height: 1.5;
+    }
 
-        .app-icon-card.independent {
-            border-left: 4px solid var(--text-dim);
-        }
+    label.field-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-dim);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 6px;
+    }
 
-        .app-icon-card.related {
-            border-left: 4px solid var(--purple);
-            background: linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, var(--surface) 100%);
-        }
+    input, select {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 11px 13px;
+        border-radius: 12px;
+        font-size: 13.5px;
+        font-family: var(--font-body);
+        outline: none;
+        width: 100%;
+    }
 
-        .app-info {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
+    input:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+    input::placeholder { color: var(--text-faint); }
 
-        .app-title {
-            font-size: 14px;
-            font-weight: 600;
-        }
+    .builder-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 220px;
+        overflow-y: auto;
+        margin-bottom: 4px;
+    }
 
-        .app-tag {
-            font-size: 10px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+    .field-builder-row {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 10px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
 
-        .relation-badge {
-            font-size: 9px;
-            padding: 3px 7px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
+    .row-inputs { display: flex; gap: 8px; }
+    .row-inputs input { flex: 1.4; }
+    .row-inputs select { flex: 1; }
 
-        .badge-indep { background: rgba(148, 163, 184, 0.15); color: var(--text-dim); }
-        .badge-rel { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .btn {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 11px 16px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: var(--font-body);
+        font-weight: 500;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: 0.15s;
+    }
 
-        .form-card {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+    .btn:hover { background: var(--surface-hover); border-color: var(--text-faint); }
+    .btn-icon-only { padding: 8px; }
+    .btn-gold { background: var(--gold); border: none; color: #1a1409; font-weight: 600; }
+    .btn-gold:hover { background: var(--gold-hover); }
+    .btn-ghost-gold { border-color: rgba(217,166,83,0.35); color: var(--gold); }
+    .btn-ghost-gold:hover { background: var(--gold-soft); }
+    .btn-success { background: var(--success); border: none; color: #06251b; font-weight: 600; }
+    .btn-danger-outline { color: var(--danger); border-color: rgba(226,104,95,0.3); }
+    .btn-tiny { padding: 5px 9px; font-size: 10.5px; border-radius: 8px; }
+    .btn-full { width: 100%; }
+    .btn-row { display: flex; gap: 8px; }
 
-        .form-field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+    svg.ic { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-        .form-field label {
-            font-size: 11px;
-            color: var(--text-dim);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+    /* ---------- Empty state ---------- */
+    .empty-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 14px;
+        padding: 20px;
+    }
 
-        .nav-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid var(--border);
-            margin-top: 8px;
-        }
+    .empty-state .ring {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: 1.5px dashed var(--text-faint);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gold);
+    }
 
-        .form-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 11px;
-            color: var(--text-dim);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
+    .empty-state h3 {
+        font-family: var(--font-display);
+        font-size: 16px;
+        margin: 0;
+        font-weight: 600;
+    }
 
-        .top-menu-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-    </style>
+    .empty-state p {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin: 0;
+        max-width: 240px;
+        line-height: 1.5;
+    }
+
+    /* ---------- Launcher cards ---------- */
+    .app-launcher-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        overflow-y: auto;
+    }
+
+    .app-icon-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 13px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: 0.15s;
+        position: relative;
+    }
+
+    .app-icon-card::before {
+        content: "";
+        position: absolute;
+        inset: 3px -4px -4px 3px;
+        border-radius: 14px;
+        background: var(--surface-2);
+        z-index: -1;
+        opacity: 0;
+        transition: 0.15s;
+    }
+
+    .app-icon-card.has-stack::before { opacity: 1; }
+
+    .app-icon-card:hover { border-color: var(--text-faint); background: var(--surface-hover); }
+
+    .depth-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .app-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+    .app-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; }
+    .app-meta { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-dim); letter-spacing: 0.03em; }
+    .app-meta strong { color: var(--text-dim); }
+
+    /* ---------- Runtime ---------- */
+    .breadcrumb {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-faint);
+        margin-bottom: 10px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .crumb { display: flex; align-items: center; gap: 5px; }
+    .crumb .depth-dot { width: 6px; height: 6px; }
+    .crumb.crumb-active { color: var(--text); font-weight: 600; }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .form-header-title { display: flex; align-items: center; gap: 8px; }
+    .form-header-title .depth-dot { width: 8px; height: 8px; }
+    #runtime-title { font-family: var(--font-display); font-weight: 600; font-size: 15.5px; }
+    #record-indicator { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim); }
+
+    .runtime-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+
+    .form-card { display: flex; flex-direction: column; gap: 13px; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+
+    .context-banner {
+        background: var(--surface);
+        padding: 9px 11px;
+        border-radius: 10px;
+        font-size: 11.5px;
+        color: var(--text-dim);
+        border-left: 2.5px solid var(--gold);
+        margin-bottom: 12px;
+        line-height: 1.4;
+    }
+
+    .context-banner strong { color: var(--text); font-weight: 600; }
+
+    .thread {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px dashed var(--border);
+        position: relative;
+    }
+
+    .thread-label {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        color: var(--text-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+    }
+
+    .thread-list { position: relative; padding-left: 14px; }
+
+    .thread-list::before {
+        content: "";
+        position: absolute;
+        left: 3px;
+        top: 6px;
+        bottom: 6px;
+        width: 1px;
+        background: repeating-linear-gradient(to bottom, var(--border) 0 4px, transparent 4px 8px);
+    }
+
+    .thread-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 11px 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+
+    .thread-item::before {
+        content: "";
+        position: absolute;
+        left: -14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--gold);
+    }
+
+    .thread-item:hover { border-color: var(--gold); background: var(--surface-hover); }
+    .thread-item-name { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+    .thread-item-count { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
+
+    .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 12px;
+        margin-top: 8px;
+        border-top: 1px solid var(--border);
+    }
+
+    .nav-bar .btn { flex: 1; }
+
+    .action-row { display: flex; gap: 7px; margin-top: 8px; }
+    .action-row .btn { flex: 1; font-size: 11.5px; }
+
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    .pill {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+    }
+</style>
 </head>
 <body>
 
-    <div class="phone-frame">
-        <div class="phone-notch"></div>
+<div class="phone-frame">
+    <div class="phone-cam"></div>
+    <div class="phone-screen">
 
-        <!-- Pantalla de Lanzador / Menú Principal -->
+        <!-- Lanzador -->
         <section id="screen-launcher" class="screen">
-            <div class="top-menu-bar">
-                <h2>Mis Formularios</h2>
-                <button onclick="startNewForm()" class="btn btn-primary" style="padding: 6px 12px; font-size: 11px;">＋ Crear Formulario</button>
+            <div class="brand-row">
+                <div class="brand">DataForge<small>CONSTRUCTOR DE DATOS</small></div>
+                <button onclick="startNewForm()" class="btn btn-gold btn-icon-only" title="Crear formulario">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
             </div>
-            <p style="font-size: 11px; color: var(--text-dim); margin-top:0;">Selecciona un formulario para ejecutar o edítalo:</p>
-            
+
+            <div id="launcher-empty" class="empty-state" style="display:none;">
+                <div class="ring">
+                    <svg class="ic" viewBox="0 0 24 24" style="width:22px;height:22px;"><path d="M12 5v14M5 12h14"/></svg>
+                </div>
+                <h3>Crea tu primer formulario</h3>
+                <p>Puede ser cualquier cosa: clientes, pacientes, pedidos, inventario. Empieza por el dato principal de tu proceso.</p>
+                <button onclick="startNewForm()" class="btn btn-gold">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    Crear formulario
+                </button>
+            </div>
+
             <div id="launcher-list" class="app-launcher-grid"></div>
         </section>
 
-        <!-- Pantalla de Diseñador de Formulario -->
+        <!-- Diseñador -->
         <section id="screen-builder" class="screen hidden">
-            <div class="top-menu-bar">
-                <span id="builder-step-label" style="background:var(--accent); color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;">Diseñador</span>
-                <button onclick="showLauncher()" class="btn" style="padding: 4px 8px; font-size: 10px;">📱 Menú</button>
-            </div>
-            <h2 id="builder-heading">Configurar Formulario</h2>
-            
-            <div style="margin-bottom: 8px;">
-                <label style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">Título del Formulario</label>
-                <input type="text" id="form-title-input" placeholder="Ej. Inventario" style="margin-top: 4px;">
+            <div class="top-bar">
+                <span id="builder-step-label" class="pill" style="background:var(--gold-soft); color:var(--gold);">Nuevo</span>
+                <button onclick="showLauncher()" class="btn btn-tiny">
+                    <svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    Inicio
+                </button>
             </div>
 
-            <div id="pivot-section" style="margin-bottom: 8px; display: none;">
-                <label style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">Campo de Relación (Pivote)</label>
+            <h2 id="builder-heading">Definir formulario</h2>
+            <p class="subtitle" id="builder-subtitle">Dale un nombre y agrega los datos que quieres registrar.</p>
+
+            <div style="margin-bottom: 14px;">
+                <label class="field-label">Nombre</label>
+                <input type="text" id="form-title-input" placeholder="Ej. Clientes, Pedidos, Pacientes…">
+            </div>
+
+            <div id="pivot-section" style="margin-bottom: 14px; display: none;">
+                <label class="field-label">Depende de</label>
                 <select id="form-pivot-source">
-                    <option value="">-- Sin relación pivote (Independiente) --</option>
+                    <option value="">No depende de otro — es un formulario principal</option>
                 </select>
             </div>
 
-            <div style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Campos</div>
-            <div id="builder-fields-container" class="builder-container" style="max-height: 160px;"></div>
+            <label class="field-label">Datos a registrar</label>
+            <div id="builder-fields-container" class="builder-container"></div>
 
-            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
-                <button type="button" onclick="addBuilderField()" class="btn">＋ Añadir campo</button>
-                <button type="button" onclick="saveAndReturnLauncher()" class="btn btn-success">Guardar y Volver al Menú ➔</button>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                <button type="button" onclick="addBuilderField()" class="btn btn-ghost-gold">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    Agregar dato
+                </button>
+                <button type="button" onclick="saveAndReturnLauncher()" class="btn btn-success">
+                    Guardar formulario
+                </button>
             </div>
         </section>
 
-        <!-- Pantalla de Ejecución / Runtime Maestro-Detalle -->
+        <!-- Runtime -->
         <section id="screen-runtime" class="screen hidden">
+            <div id="runtime-breadcrumb" class="breadcrumb"></div>
+
             <div class="form-header">
-                <div>
-                    <span id="runtime-tier-badge" style="background:var(--accent); color:white; padding:2px 5px; border-radius:3px; font-size:9px;">Form</span>
-                    <strong id="runtime-title" style="color:var(--text);">Formulario</strong>
+                <div class="form-header-title">
+                    <span id="runtime-depth-dot" class="depth-dot"></span>
+                    <strong id="runtime-title">Formulario</strong>
                 </div>
                 <span id="record-indicator">1 / 1</span>
             </div>
 
-            <div id="runtime-card" class="form-card"></div>
+            <div class="runtime-scroll">
+                <div id="runtime-card" class="form-card"></div>
+                <div id="children-section" class="thread" style="display:none;">
+                    <div class="thread-label">Formularios relacionados</div>
+                    <div id="children-list" class="thread-list"></div>
+                </div>
+            </div>
 
             <div class="nav-bar">
-                <button onclick="changeRecord(-1)" class="btn">◀ Ant</button>
-                <button onclick="addNewRecord()" class="btn">＋ Nuevo</button>
-                <button onclick="changeRecord(1)" class="btn">Sig ▶</button>
+                <button onclick="changeRecord(-1)" class="btn">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                    Anterior
+                </button>
+                <button onclick="addNewRecord()" class="btn btn-ghost-gold">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    Nuevo
+                </button>
+                <button onclick="changeRecord(1)" class="btn">
+                    Siguiente
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
             </div>
 
-            <div style="display: flex; gap: 6px; margin-top: 8px;">
-                <button onclick="showLauncher()" class="btn" style="flex:1; font-size:11px;">📱 Menú Apps</button>
-                <button onclick="editCurrentFormStructure()" class="btn btn-danger" style="flex:1; font-size:11px;">⚙️ Editar</button>
+            <div class="action-row">
+                <button id="back-parent-btn" onclick="goBackToParent()" class="btn btn-ghost-gold" style="display:none;">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                    Volver
+                </button>
+                <button onclick="showLauncher()" class="btn">
+                    <svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    Inicio
+                </button>
+                <button onclick="editCurrentFormStructure()" class="btn btn-danger-outline">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    Editar
+                </button>
             </div>
         </section>
+
     </div>
+</div>
 
-    <script>
-        // Registro inicial con la estructura Maestro-Detalle sugerida (Obra -> Compras -> Actividades)
-        let formsRegistry = [
-            {
-                id: 1,
-                title: "Obras",
-                pivotFormId: null,
-                pivotField: "",
-                fields: [
-                    { name: "Nombre Obra", type: "text" },
-                    { name: "Cliente", type: "text" },
-                    { name: "Ubicación", type: "text" }
-                ],
-                data: [{}]
-            },
-            {
-                id: 2,
-                title: "Compras",
-                pivotFormId: 1,
-                pivotField: "Nombre Obra",
-                fields: [
-                    { name: "Proveedor", type: "text" },
-                    { name: "N° Documento", type: "text" },
-                    { name: "Total", type: "number" }
-                ],
-                data: [{}]
-            },
-            {
-                id: 3,
-                title: "Actividades",
-                pivotFormId: 2,
-                pivotField: "N° Documento",
-                fields: [
-                    { name: "Descripción", type: "text" },
-                    { name: "Fecha", type: "date" },
-                    { name: "Estado", type: "text" }
-                ],
-                data: [{}]
+<script>
+    // ============================================================
+    // MODELO DE DATOS
+    // Arranca vacío: el usuario define sus propios formularios,
+    // para cualquier área (no solo construcción). Cada registro
+    // tiene un _id único; los hijos guardan el _id exacto de su
+    // registro padre (_parentId), no un valor de texto — así no
+    // hay colisiones y se puede anidar a cualquier profundidad
+    // (padre → hijo → nieto → bisnieto → …).
+    // ============================================================
+
+    let recordIdCounter = 1;
+    function nextRecordId() { return recordIdCounter++; }
+
+    let formsRegistry = [];
+    let activeIndexByForm = {};
+    let activeFormId = null;
+    let editingFormId = null;
+    let navStack = [];
+
+    const DEPTH_COLORS = ['var(--depth-0)', 'var(--depth-1)', 'var(--depth-2)', 'var(--depth-3)'];
+
+    function getForm(id) { return formsRegistry.find(f => f.id === id); }
+    function getChildForms(formId) { return formsRegistry.filter(f => f.pivotFormId === formId); }
+
+    function getDepth(formId) {
+        let depth = 0;
+        let form = getForm(formId);
+        while (form && form.pivotFormId) {
+            depth++;
+            form = getForm(form.pivotFormId);
+            if (depth > 20) break; // salvaguarda anti-loop
+        }
+        return depth;
+    }
+
+    function depthColor(depth) { return DEPTH_COLORS[depth % DEPTH_COLORS.length]; }
+
+    function hasDescendants(formId) {
+        return getChildForms(formId).length > 0;
+    }
+
+    // ============================================================
+    // RESOLUCIÓN JERÁRQUICA
+    // ============================================================
+
+    function getVisibleRecords(formId) {
+        const form = getForm(formId);
+        if (!form.pivotFormId) return form.data;
+        const parentRecord = getActiveRecord(form.pivotFormId);
+        if (!parentRecord) return [];
+        return form.data.filter(r => r._parentId === parentRecord._id);
+    }
+
+    function getActiveRecord(formId) {
+        let list = getVisibleRecords(formId);
+
+        if (list.length === 0) {
+            const form = getForm(formId);
+            let parentId = null;
+            if (form.pivotFormId) {
+                const parentRec = getActiveRecord(form.pivotFormId);
+                if (!parentRec) return null;
+                parentId = parentRec._id;
             }
-        ];
-
-        let activeFormId = 1;
-        let activeRecordIndex = 0;
-        let editingFormId = 1;
-
-        function showLauncher() {
-            saveCurrentRuntimeData();
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('screen-launcher').classList.remove('hidden');
-            renderLauncherList();
+            const rec = { _id: nextRecordId(), _parentId: parentId };
+            form.data.push(rec);
+            list = getVisibleRecords(formId);
+            activeIndexByForm[formId] = 0;
         }
 
-        function renderLauncherList() {
-            const listContainer = document.getElementById('launcher-list');
-            listContainer.innerHTML = '';
+        let idx = activeIndexByForm[formId] || 0;
+        if (idx >= list.length) idx = list.length - 1;
+        if (idx < 0) idx = 0;
+        activeIndexByForm[formId] = idx;
 
-            formsRegistry.forEach((form) => {
-                const isRelated = form.pivotFormId !== null && form.pivotFormId !== "" && form.pivotFormId !== undefined;
-                
-                const card = document.createElement('div');
-                card.className = `app-icon-card ${isRelated ? 'related' : 'independent'}`;
+        return list[idx];
+    }
 
-                let badgeHtml = isRelated 
-                    ? `<span class="relation-badge badge-rel">🔗 Relacionado</span>` 
-                    : `<span class="relation-badge badge-indep">⚡ Independiente</span>`;
+    function resetDescendantIndices(formId) {
+        getChildForms(formId).forEach(child => {
+            activeIndexByForm[child.id] = 0;
+            resetDescendantIndices(child.id);
+        });
+    }
 
-                card.innerHTML = `
-                    <div class="app-info" onclick="launchForm(${form.id})" style="flex:1;">
-                        <span class="app-tag">Formulario #${form.id}</span>
-                        <span class="app-title">${form.title}</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        ${badgeHtml}
-                        <button onclick="editFormStructure(${form.id})" class="btn" style="padding:4px 8px; font-size:10px;">⚙️</button>
-                    </div>
-                `;
-                listContainer.appendChild(card);
-            });
+    // ============================================================
+    // LANZADOR
+    // ============================================================
+
+    function showLauncher() {
+        saveCurrentRuntimeData();
+        navStack = [];
+        activeFormId = null;
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('screen-launcher').classList.remove('hidden');
+        renderLauncherList();
+    }
+
+    function renderLauncherList() {
+        const listContainer = document.getElementById('launcher-list');
+        const emptyState = document.getElementById('launcher-empty');
+        listContainer.innerHTML = '';
+
+        if (formsRegistry.length === 0) {
+            emptyState.style.display = 'flex';
+            return;
         }
+        emptyState.style.display = 'none';
 
-        function startNewForm() {
-            const newId = formsRegistry.length + 1;
-            formsRegistry.push({
-                id: newId,
-                title: `Formulario ${newId}`,
-                pivotFormId: null,
-                pivotField: "",
-                fields: [{ name: "Detalle", type: "text" }],
-                data: [{}]
-            });
-            editFormStructure(newId);
-        }
+        // Solo los formularios raíz (sin padre) se listan como apps
+        // ejecutables; los relacionados viven dentro del flujo del
+        // registro padre y se editan desde aquí con un toque.
+        formsRegistry.forEach((form) => {
+            const isRoot = !form.pivotFormId;
+            const depth = getDepth(form.id);
+            const stack = hasDescendants(form.id);
 
-        function editFormStructure(formId) {
-            editingFormId = formId;
-            const formObj = formsRegistry.find(f => f.id === formId);
+            const card = document.createElement('div');
+            card.className = `app-icon-card ${stack ? 'has-stack' : ''}`;
 
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('screen-builder').classList.remove('hidden');
+            const iconSvg = isRoot
+                ? `<svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--gold);"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`
+                : `<svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--text-dim);"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
 
-            document.getElementById('builder-step-label').textContent = `Formulario #${formObj.id}`;
-            document.getElementById('form-title-input').value = formObj.title;
+            const metaText = isRoot
+                ? `${form.data.length} registro${form.data.length === 1 ? '' : 's'}`
+                : `parte de <strong>${getForm(form.pivotFormId).title}</strong>`;
 
-            const pivotSection = document.getElementById('pivot-section');
-            const pivotSelect = document.getElementById('form-pivot-source');
+            card.innerHTML = `
+                <span class="depth-dot" style="background:${depthColor(depth)};"></span>
+                <div class="app-info">
+                    <span class="app-title">${form.title}</span>
+                    <span class="app-meta">${metaText}</span>
+                </div>
+                ${iconSvg}
+            `;
 
-            const previousForms = formsRegistry.filter(f => f.id !== formObj.id);
-            if (previousForms.length > 0) {
-                pivotSection.style.display = 'block';
-                pivotSelect.innerHTML = `<option value="">-- Sin relación pivote (Independiente) --</option>`;
-                
-                previousForms.forEach(pf => {
-                    pf.fields.forEach(f => {
-                        const opt = document.createElement('option');
-                        opt.value = `${pf.id}::${f.name}`;
-                        opt.textContent = `[${pf.title}] ${f.name}`;
-                        if (formObj.pivotFormId == pf.id && formObj.pivotField == f.name) {
-                            opt.selected = true;
-                        }
-                        pivotSelect.appendChild(opt);
-                    });
-                });
-            } else {
-                pivotSection.style.display = 'none';
-            }
-
-            renderBuilderFields();
-        }
-
-        function renderBuilderFields() {
-            const formObj = formsRegistry.find(f => f.id === editingFormId);
-            const container = document.getElementById('builder-fields-container');
-            container.innerHTML = '';
-
-            formObj.fields.forEach((field, index) => {
-                const row = document.createElement('div');
-                row.className = 'field-builder-row';
-                row.innerHTML = `
-                    <div class="row-inputs">
-                        <input type="text" class="f-name" value="${field.name}" data-index="${index}">
-                        <select class="f-type" data-index="${index}">
-                            <option value="text" ${field.type==='text'?'selected':''}>Texto</option>
-                            <option value="number" ${field.type==='number'?'selected':''}>Número</option>
-                            <option value="date" ${field.type==='date'?'selected':''}>Fecha</option>
-                            <option value="email" ${field.type==='email'?'selected':''}>Email</option>
-                            <option value="checkbox" ${field.type==='checkbox'?'selected':''}>Sí/No</option>
-                        </select>
-                    </div>
-                    ${formObj.fields.length > 1 ? `<button type="button" class="btn btn-danger" onclick="removeBuilderField(${index})" style="padding: 2px; font-size: 10px;">Eliminar</button>` : ''}
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        function addBuilderField() {
-            saveBuilderState();
-            const formObj = formsRegistry.find(f => f.id === editingFormId);
-            formObj.fields.push({ name: `Campo ${formObj.fields.length + 1}`, type: 'text' });
-            renderBuilderFields();
-        }
-
-        function removeBuilderField(index) {
-            saveBuilderState();
-            const formObj = formsRegistry.find(f => f.id === editingFormId);
-            formObj.fields.splice(index, 1);
-            renderBuilderFields();
-        }
-
-        function saveBuilderState() {
-            const formObj = formsRegistry.find(f => f.id === editingFormId);
-            if (!formObj) return;
-
-            const titleInput = document.getElementById('form-title-input');
-            if (titleInput) formObj.title = titleInput.value || `Formulario ${formObj.id}`;
-
-            const pivotSelect = document.getElementById('form-pivot-source');
-            if (pivotSelect && pivotSelect.value) {
-                const parts = pivotSelect.value.split('::');
-                formObj.pivotFormId = parseInt(parts[0]);
-                formObj.pivotField = parts[1];
-            } else {
-                formObj.pivotFormId = null;
-                formObj.pivotField = "";
-            }
-
-            const container = document.getElementById('builder-fields-container');
-            if (container) {
-                container.querySelectorAll('.field-builder-row').forEach((row, index) => {
-                    const nameInput = row.querySelector('.f-name');
-                    const typeSelect = row.querySelector('.f-type');
-                    if (formObj.fields[index]) {
-                        formObj.fields[index].name = nameInput.value;
-                        formObj.fields[index].type = typeSelect.value;
-                    }
-                });
-            }
-        }
-
-        function saveAndReturnLauncher() {
-            saveBuilderState();
-            showLauncher();
-        }
-
-        function editCurrentFormStructure() {
-            editFormStructure(activeFormId);
-        }
-
-        function launchForm(formId) {
-            activeFormId = formId;
-            activeRecordIndex = 0;
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('screen-runtime').classList.remove('hidden');
-            renderRuntime();
-        }
-
-        // Obtener la lista de registros filtrada jerárquicamente según el contexto del padre (Maestro-Detalle)
-        function getFilteredRecordsForActiveForm() {
-            const formObj = formsRegistry.find(f => f.id === activeFormId);
-            if (!formObj.pivotFormId || !formObj.pivotField) {
-                return formObj.data;
-            }
-
-            const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-            if (!parentForm || parentForm.data.length === 0) {
-                return [];
-            }
-
-            // Seleccionamos el valor activo del registro padre actual
-            const parentIndex = window['parentIndex_' + activeFormId] || 0;
-            const parentRecord = parentForm.data[parentIndex] || parentForm.data[0] || {};
-            const activeParentValue = parentRecord[formObj.pivotField];
-
-            if (!activeParentValue) {
-                return []; // Si el padre no tiene valor en el campo pivote, el hijo no muestra registros o se aísla
-            }
-
-            // Filtramos los registros del hijo que coincidan con la clave foránea contextual
-            return formObj.data.filter(rec => rec['__parentId'] === activeParentValue);
-        }
-
-        function renderRuntime() {
-            saveCurrentRuntimeData();
-            const formObj = formsRegistry.find(f => f.id === activeFormId);
-            
-            document.getElementById('runtime-tier-badge').textContent = `F#${formObj.id}`;
-            document.getElementById('runtime-title').textContent = formObj.title;
-
-            let recordList = getFilteredRecordsForActiveForm();
-            let activePivotVal = null;
-
-            if (formObj.pivotFormId && formObj.pivotField) {
-                const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-                const parentIndex = window['parentIndex_' + activeFormId] || 0;
-                const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
-                activePivotVal = parentRec[formObj.pivotField] || "(Sin valor en el padre)";
-            }
-
-            if (recordList.length === 0) {
-                // Si es un formulario hijo y no hay registros para este padre, inicializamos uno con la FK vinculada automáticamente
-                const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-                const parentIndex = window['parentIndex_' + activeFormId] || 0;
-                const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
-                
-                const newRec = { '__parentId': parentRec[formObj.pivotField] };
-                formObj.data.push(newRec);
-                recordList = getFilteredRecordsForActiveForm();
-                activeRecordIndex = 0;
-            }
-
-            if (activeRecordIndex >= recordList.length) activeRecordIndex = recordList.length - 1;
-            if (activeRecordIndex < 0) activeRecordIndex = 0;
-
-            const record = recordList[activeRecordIndex] || {};
-            const card = document.getElementById('runtime-card');
-
-            let html = '';
-            if (formObj.pivotFormId && formObj.pivotField) {
-                html += `<div style="background:var(--surface-hover); padding:6px 10px; border-radius:6px; font-size:11px; border-left:3px solid var(--purple); display:flex; justify-content:space-between; align-items:center;">
-                    <span>Relación (${formObj.pivotField}): <strong>${activePivotVal}</strong></span>
-                    <button onclick="changeParentContext(-1)" class="btn" style="padding:2px 6px; font-size:9px;">Cambiar Padre 🔄</button>
-                </div>`;
-            }
-
-            formObj.fields.forEach(f => {
-                const val = record[f.name] !== undefined ? record[f.name] : '';
-                html += `<div class="form-field"><label>${f.name}</label>`;
-                if (f.type === 'checkbox') {
-                    html += `<input type="checkbox" class="r-input" data-name="${f.name}" ${val?'checked':''} style="width:auto;">`;
+            card.onclick = () => {
+                if (isRoot) {
+                    launchForm(form.id, { fromLauncher: true });
                 } else {
-                    html += `<input type="${f.type}" class="r-input" data-name="${f.name}" value="${val}">`;
+                    editFormStructure(form.id);
                 }
-                html += `</div>`;
-            });
+            };
 
-            card.innerHTML = html;
-            document.getElementById('record-indicator').textContent = `${activeRecordIndex + 1} / ${recordList.length}`;
+            listContainer.appendChild(card);
+        });
+    }
+
+    function startNewForm() {
+        const newId = formsRegistry.length ? Math.max(...formsRegistry.map(f => f.id)) + 1 : 1;
+        formsRegistry.push({
+            id: newId,
+            title: "",
+            pivotFormId: null,
+            pivotField: "",
+            fields: [{ name: "", type: "text" }],
+            data: []
+        });
+        editFormStructure(newId, { isNew: true });
+    }
+
+    // ============================================================
+    // DISEÑADOR
+    // ============================================================
+
+    function editFormStructure(formId, opts) {
+        opts = opts || {};
+        editingFormId = formId;
+        const formObj = getForm(formId);
+
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('screen-builder').classList.remove('hidden');
+
+        document.getElementById('builder-step-label').textContent = opts.isNew ? 'Nuevo' : 'Editar';
+        document.getElementById('builder-heading').textContent = opts.isNew ? 'Definir formulario' : `Editar “${formObj.title || 'formulario'}”`;
+        document.getElementById('form-title-input').value = formObj.title;
+
+        const pivotSection = document.getElementById('pivot-section');
+        const pivotSelect = document.getElementById('form-pivot-source');
+        const subtitle = document.getElementById('builder-subtitle');
+
+        const otherForms = formsRegistry.filter(f => f.id !== formObj.id);
+        if (otherForms.length > 0) {
+            pivotSection.style.display = 'block';
+            subtitle.textContent = 'Dale un nombre, agrega los datos, y si corresponde, dile de qué formulario depende.';
+            pivotSelect.innerHTML = `<option value="">No depende de otro — es un formulario principal</option>`;
+
+            otherForms.forEach(pf => {
+                pf.fields.forEach(f => {
+                    if (!f.name) return;
+                    const opt = document.createElement('option');
+                    opt.value = `${pf.id}::${f.name}`;
+                    opt.textContent = `${pf.title} → ${f.name}`;
+                    if (formObj.pivotFormId == pf.id && formObj.pivotField == f.name) opt.selected = true;
+                    pivotSelect.appendChild(opt);
+                });
+            });
+        } else {
+            pivotSection.style.display = 'none';
+            subtitle.textContent = 'Este será tu primer formulario. Dale un nombre y agrega los datos que quieres registrar.';
         }
 
-        function saveCurrentRuntimeData() {
-            const formObj = formsRegistry.find(f => f.id === activeFormId);
-            if (!formObj) return;
+        renderBuilderFields();
+    }
 
-            const inputs = document.querySelectorAll('#runtime-card .r-input');
-            if (inputs.length === 0) return;
-            
-            let recordList = getFilteredRecordsForActiveForm();
-            let currentRecord = recordList[activeRecordIndex];
+    function renderBuilderFields() {
+        const formObj = getForm(editingFormId);
+        const container = document.getElementById('builder-fields-container');
+        container.innerHTML = '';
 
-            if (!currentRecord) {
-                currentRecord = {};
-                if (formObj.pivotFormId && formObj.pivotField) {
-                    const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-                    const parentIndex = window['parentIndex_' + activeFormId] || 0;
-                    const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
-                    currentRecord['__parentId'] = parentRec[formObj.pivotField];
+        formObj.fields.forEach((field, index) => {
+            const row = document.createElement('div');
+            row.className = 'field-builder-row';
+            row.innerHTML = `
+                <div class="row-inputs">
+                    <input type="text" class="f-name" placeholder="Nombre del dato (ej. Nombre, Fecha, Monto)" value="${field.name}" data-index="${index}">
+                    <select class="f-type" data-index="${index}">
+                        <option value="text" ${field.type==='text'?'selected':''}>Texto</option>
+                        <option value="number" ${field.type==='number'?'selected':''}>Número</option>
+                        <option value="date" ${field.type==='date'?'selected':''}>Fecha</option>
+                        <option value="email" ${field.type==='email'?'selected':''}>Email</option>
+                        <option value="checkbox" ${field.type==='checkbox'?'selected':''}>Sí/No</option>
+                    </select>
+                </div>
+                ${formObj.fields.length > 1 ? `<button type="button" class="btn btn-danger-outline btn-tiny" onclick="removeBuilderField(${index})" style="align-self:flex-start;">Quitar</button>` : ''}
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function addBuilderField() {
+        saveBuilderState();
+        const formObj = getForm(editingFormId);
+        formObj.fields.push({ name: "", type: 'text' });
+        renderBuilderFields();
+    }
+
+    function removeBuilderField(index) {
+        saveBuilderState();
+        const formObj = getForm(editingFormId);
+        formObj.fields.splice(index, 1);
+        renderBuilderFields();
+    }
+
+    function saveBuilderState() {
+        const formObj = getForm(editingFormId);
+        if (!formObj) return;
+
+        const titleInput = document.getElementById('form-title-input');
+        if (titleInput) formObj.title = titleInput.value || 'Sin nombre';
+
+        const pivotSelect = document.getElementById('form-pivot-source');
+        if (pivotSelect && pivotSelect.value) {
+            const parts = pivotSelect.value.split('::');
+            const newPivotFormId = parseInt(parts[0]);
+            if (newPivotFormId !== formObj.pivotFormId) formObj.data = [];
+            formObj.pivotFormId = newPivotFormId;
+            formObj.pivotField = parts[1];
+        } else {
+            if (formObj.pivotFormId !== null) formObj.data = [];
+            formObj.pivotFormId = null;
+            formObj.pivotField = "";
+        }
+
+        const container = document.getElementById('builder-fields-container');
+        if (container) {
+            container.querySelectorAll('.field-builder-row').forEach((row, index) => {
+                const nameInput = row.querySelector('.f-name');
+                const typeSelect = row.querySelector('.f-type');
+                if (formObj.fields[index]) {
+                    formObj.fields[index].name = nameInput.value || `Dato ${index + 1}`;
+                    formObj.fields[index].type = typeSelect.value;
                 }
-                formObj.data.push(currentRecord);
-            }
-
-            inputs.forEach(input => {
-                currentRecord[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
             });
         }
+    }
 
-        // Permite alternar entre los registros del formulario padre para consultar los hijos correspondientes (maestro-detalle real)
-        function changeParentContext(dir) {
-            saveCurrentRuntimeData();
-            const formObj = formsRegistry.find(f => f.id === activeFormId);
-            const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-            if (!parentForm) return;
-
-            let pIdxKey = 'parentIndex_' + activeFormId;
-            if (window[pIdxKey] === undefined) window[pIdxKey] = 0;
-
-            window[pIdxKey] += dir;
-            if (window[pIdxKey] < 0) window[pIdxKey] = 0;
-            if (window[pIdxKey] >= parentForm.data.length) window[pIdxKey] = parentForm.data.length - 1;
-
-            activeRecordIndex = 0;
-            renderRuntime();
-        }
-
-        function changeRecord(direction) {
-            saveCurrentRuntimeData();
-            const recordList = getFilteredRecordsForActiveForm();
-            
-            activeRecordIndex += direction;
-            if (activeRecordIndex < 0) activeRecordIndex = 0;
-            if (activeRecordIndex >= recordList.length) activeRecordIndex = recordList.length - 1;
-            renderRuntime();
-        }
-
-        function addNewRecord() {
-            saveCurrentRuntimeData();
-            const formObj = formsRegistry.find(f => f.id === activeFormId);
-            
-            const newRec = {};
-            if (formObj.pivotFormId && formObj.pivotField) {
-                const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-                const parentIndex = window['parentIndex_' + activeFormId] || 0;
-                const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
-                newRec['__parentId'] = parentRec[formObj.pivotField];
-            }
-
-            formObj.data.push(newRec);
-            const recordList = getFilteredRecordsForActiveForm();
-            activeRecordIndex = recordList.length - 1;
-            renderRuntime();
-        }
-
+    function saveAndReturnLauncher() {
+        saveBuilderState();
         showLauncher();
-    </script>
+    }
+
+    function editCurrentFormStructure() {
+        editFormStructure(activeFormId);
+    }
+
+    // ============================================================
+    // RUNTIME
+    // ============================================================
+
+    function launchForm(formId, opts) {
+        opts = opts || {};
+        saveCurrentRuntimeData();
+
+        if (opts.fromDrill && activeFormId) {
+            navStack.push(activeFormId);
+        } else if (opts.fromLauncher) {
+            navStack = [];
+        }
+
+        activeFormId = formId;
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('screen-runtime').classList.remove('hidden');
+        renderRuntime();
+    }
+
+    function goBackToParent() {
+        saveCurrentRuntimeData();
+        const prevId = navStack.pop();
+        if (prevId === undefined) { showLauncher(); return; }
+        activeFormId = prevId;
+        renderRuntime();
+    }
+
+    function buildBreadcrumb() {
+        const chain = [...navStack, activeFormId];
+        return chain.map((id, i) => {
+            const f = getForm(id);
+            const depth = getDepth(id);
+            const isLast = i === chain.length - 1;
+            return `<span class="crumb ${isLast ? 'crumb-active' : ''}">
+                <span class="depth-dot" style="background:${depthColor(depth)};"></span>${f.title}
+            </span>${isLast ? '' : '<span>/</span>'}`;
+        }).join('');
+    }
+
+    function renderRuntime() {
+        saveCurrentRuntimeData();
+        const formObj = getForm(activeFormId);
+
+        document.getElementById('runtime-breadcrumb').innerHTML = buildBreadcrumb();
+        document.getElementById('runtime-title').textContent = formObj.title;
+        document.getElementById('runtime-depth-dot').style.background = depthColor(getDepth(formObj.id));
+
+        document.getElementById('back-parent-btn').style.display = navStack.length > 0 ? 'flex' : 'none';
+
+        let recordList = getVisibleRecords(formObj.id);
+        if (recordList.length === 0) getActiveRecord(formObj.id);
+        recordList = getVisibleRecords(formObj.id);
+
+        let idx = activeIndexByForm[formObj.id] || 0;
+        if (idx >= recordList.length) idx = recordList.length - 1;
+        if (idx < 0) idx = 0;
+        activeIndexByForm[formObj.id] = idx;
+
+        const record = recordList[idx] || {};
+        const card = document.getElementById('runtime-card');
+        let html = '';
+
+        if (formObj.pivotFormId) {
+            const parentForm = getForm(formObj.pivotFormId);
+            const parentRecord = getActiveRecord(formObj.pivotFormId);
+            const label = parentRecord ? (parentRecord[formObj.pivotField] || '(sin valor)') : '(sin registro padre)';
+            html += `<div class="context-banner">Ligado a <strong>${parentForm.title}</strong> — ${formObj.pivotField}: <strong>${label}</strong></div>`;
+        }
+
+        formObj.fields.forEach(f => {
+            const val = record[f.name] !== undefined ? record[f.name] : '';
+            html += `<div class="form-field"><label class="field-label">${f.name}</label>`;
+            if (f.type === 'checkbox') {
+                html += `<input type="checkbox" class="r-input" data-name="${f.name}" ${val ? 'checked' : ''} style="width:auto;">`;
+            } else {
+                html += `<input type="${f.type}" class="r-input" data-name="${f.name}" value="${val}">`;
+            }
+            html += `</div>`;
+        });
+
+        card.innerHTML = html || `<p class="subtitle">Este formulario todavía no tiene datos definidos.</p>`;
+        document.getElementById('record-indicator').textContent = `${recordList.length ? idx + 1 : 0} / ${recordList.length}`;
+
+        renderChildrenSection(formObj.id, record);
+    }
+
+    function renderChildrenSection(formId, currentRecord) {
+        const section = document.getElementById('children-section');
+        const list = document.getElementById('children-list');
+        const children = getChildForms(formId);
+
+        if (children.length === 0 || !currentRecord || currentRecord._id === undefined) {
+            section.style.display = 'none';
+            list.innerHTML = '';
+            return;
+        }
+
+        section.style.display = 'block';
+        list.innerHTML = '';
+
+        children.forEach(child => {
+            const count = child.data.filter(r => r._parentId === currentRecord._id).length;
+            const depth = getDepth(child.id);
+            const row = document.createElement('div');
+            row.className = 'thread-item';
+            row.innerHTML = `
+                <span class="thread-item-name">
+                    <span class="depth-dot" style="background:${depthColor(depth)};"></span>
+                    ${child.title}
+                </span>
+                <span class="thread-item-count">
+                    ${count}
+                    <svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M9 18l6-6-6-6"/></svg>
+                </span>
+            `;
+            row.onclick = () => launchForm(child.id, { fromDrill: true });
+            list.appendChild(row);
+        });
+    }
+
+    function saveCurrentRuntimeData() {
+        if (!activeFormId) return;
+        const formObj = getForm(activeFormId);
+        if (!formObj) return;
+
+        const inputs = document.querySelectorAll('#runtime-card .r-input');
+        if (inputs.length === 0) return;
+
+        const list = getVisibleRecords(formObj.id);
+        const idx = activeIndexByForm[formObj.id] || 0;
+        const currentRecord = list[idx];
+        if (!currentRecord) return;
+
+        inputs.forEach(input => {
+            currentRecord[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
+        });
+    }
+
+    function changeRecord(direction) {
+        saveCurrentRuntimeData();
+        const list = getVisibleRecords(activeFormId);
+        let idx = (activeIndexByForm[activeFormId] || 0) + direction;
+        if (idx < 0) idx = 0;
+        if (idx >= list.length) idx = list.length - 1;
+        activeIndexByForm[activeFormId] = idx;
+        resetDescendantIndices(activeFormId);
+        renderRuntime();
+    }
+
+    function addNewRecord() {
+        saveCurrentRuntimeData();
+        const formObj = getForm(activeFormId);
+
+        let parentId = null;
+        if (formObj.pivotFormId) {
+            const parentRecord = getActiveRecord(formObj.pivotFormId);
+            if (!parentRecord) { return; }
+            parentId = parentRecord._id;
+        }
+
+        const newRec = { _id: nextRecordId(), _parentId: parentId };
+        formObj.data.push(newRec);
+
+        const list = getVisibleRecords(formObj.id);
+        activeIndexByForm[formObj.id] = list.length - 1;
+        resetDescendantIndices(formObj.id);
+        renderRuntime();
+    }
+
+    showLauncher();
+</script>
 </body>
 </html>
