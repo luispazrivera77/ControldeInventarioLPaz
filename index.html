@@ -724,6 +724,22 @@
         return getChildForms(formId).length > 0;
     }
 
+    // Un registro recién auto-creado para poder mostrar la tarjeta
+    // (ver getActiveRecord más abajo) no cuenta como un registro
+    // "real" hasta que tenga al menos un dato cargado. Se usa para
+    // que los contadores (launcher, formularios relacionados) no
+    // muestren "1" cuando en realidad no se ha ingresado nada.
+    function recordHasData(formObj, record) {
+        return formObj.fields.some(f => {
+            const v = record[f.name];
+            return v !== undefined && v !== '' && v !== false;
+        });
+    }
+
+    function countFilledRecords(formObj, records) {
+        return records.filter(r => recordHasData(formObj, r)).length;
+    }
+
     // ============================================================
     // RESOLUCIÓN JERÁRQUICA
     // ============================================================
@@ -810,7 +826,7 @@
                 : `<svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--text-dim);"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
 
             const metaText = isRoot
-                ? `${form.data.length} registro${form.data.length === 1 ? '' : 's'}`
+                ? `${countFilledRecords(form, form.data)} registro${countFilledRecords(form, form.data) === 1 ? '' : 's'}`
                 : `parte de <strong>${getForm(form.pivotFormId).title}</strong>`;
 
             card.innerHTML = `
@@ -1154,7 +1170,8 @@
         list.innerHTML = '';
 
         children.forEach(child => {
-            const count = child.data.filter(r => r._parentId === currentRecord._id).length;
+            const childRecords = child.data.filter(r => r._parentId === currentRecord._id);
+            const count = countFilledRecords(child, childRecords);
             const depth = getDepth(child.id);
             const row = document.createElement('div');
             row.className = 'thread-item';
@@ -1247,7 +1264,7 @@
         if (!currentRecord) return;
 
         const childCount = getChildForms(activeFormId)
-            .reduce((sum, child) => sum + child.data.filter(r => r._parentId === currentRecord._id).length, 0);
+            .reduce((sum, child) => sum + countFilledRecords(child, child.data.filter(r => r._parentId === currentRecord._id)), 0);
         const warning = childCount > 0
             ? `Este registro tiene ${childCount} registro${childCount === 1 ? '' : 's'} relacionado${childCount === 1 ? '' : 's'} que también se eliminarán. ¿Continuar?`
             : '¿Eliminar este registro? Esta acción no se puede deshacer.';
