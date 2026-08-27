@@ -1,171 +1,127 @@
-const state = {
-    parentColumns: [],
-    parentData: [],
-    derivedCount: 0,
-    workbookInstance: null
-};
+const state = { cols: [], data: [], wb: null };
 
-// Navegación tipo SPA
-const navItems = document.querySelectorAll('.nav-item');
-const views = document.querySelectorAll('.app-view');
-const pageTitle = document.getElementById('page-title');
-
-function switchView(targetId) {
-    views.forEach(v => v.classList.add('hidden'));
-    document.getElementById(targetId).classList.remove('hidden');
-
-    navItems.forEach(btn => {
-        if (btn.getAttribute('data-target') === targetId) {
-            btn.classList.add('active');
-            pageTitle.textContent = btn.textContent.trim().replace(/^[^\w\s]+/, '').trim();
-        } else {
-            btn.classList.remove('active');
-        }
+function goTo(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(screenId).classList.remove('hidden');
+    
+    document.querySelectorAll('.dock-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === screenId);
     });
-    updateStats();
+
+    if(screenId === 'pivot') initPivot();
 }
 
-navItems.forEach(btn => {
-    btn.addEventListener('click', () => switchView(btn.getAttribute('data-target')));
+document.querySelectorAll('.dock-btn').forEach(btn => {
+    btn.addEventListener('click', () => goTo(btn.dataset.view));
 });
 
-function updateStats() {
-    document.getElementById('stat-records').textContent = document.querySelectorAll('#table-body tr').length || state.parentData.length;
-    document.getElementById('stat-columns').textContent = state.parentColumns.length;
-    document.getElementById('stat-derived').textContent = state.derivedCount;
-}
-
-// Lógica de Columnas y Matriz
+// Columnas
 document.getElementById('add-col-btn').addEventListener('click', () => {
     const name = document.getElementById('col-name').value.trim();
     const type = document.getElementById('col-type').value;
-    if (!name) return alert('Ingresa un nombre');
-    state.parentColumns.push({ name, type });
+    if(!name) return;
+    
+    state.cols.push({ name, type });
     document.getElementById('col-name').value = '';
-    renderColumnsList();
+    renderChips();
 });
 
-function renderColumnsList() {
-    const list = document.getElementById('columns-list');
-    if (state.parentColumns.length === 0) {
-        list.innerHTML = '<em>Sin columnas</em>';
-        return;
-    }
-    list.innerHTML = state.parentColumns.map(c => `<li>${c.name} (${c.type})</li>`).join('');
+function renderChips() {
+    const container = document.getElementById('columns-chips');
+    container.innerHTML = state.cols.map(c => `<span class="chip">${c.name} (${c.type})</span>`).join('');
+    document.getElementById('create-table-btn').classList.toggle('hidden', state.cols.length === 0);
 }
 
 document.getElementById('create-table-btn').addEventListener('click', () => {
-    if (state.parentColumns.length === 0) return alert('Define columnas primero');
-    renderEditableTable();
-    switchView('view-data');
+    renderTable();
+    goTo('data');
 });
 
-function renderEditableTable(data = null) {
+function renderTable(customData = null) {
     let html = '<table><thead><tr>';
-    state.parentColumns.forEach(c => html += `<th>${c.name}</th>`);
-    html += '<th>Acciones</th></tr></thead><tbody id="table-body">';
-
-    const rowsToGen = data || [{}, {}, {}];
-    rowsToGen.forEach(row => html += generateRowHtml(row));
+    state.cols.forEach(c => html += `<th>${c.name}</th>`);
+    html += '<th></th></tr></thead><tbody id="tbody">';
+    
+    const rows = customData || [{}, {}, {}];
+    rows.forEach(r => html += rowHtml(r));
     html += '</tbody></table>';
     
     document.getElementById('table-container').innerHTML = html;
-    updateStats();
 }
 
-function generateRowHtml(values = {}) {
-    let html = '<tr>';
-    state.parentColumns.forEach(col => {
-        const val = values[col.name] !== undefined ? values[col.name] : '';
-        const inputType = col.type === 'number' ? 'number' : (col.type === 'date' ? 'date' : 'text');
-        if (col.type === 'boolean') {
-            html += `<td><input type="checkbox" class="cell-input" ${val ? 'checked' : ''}></td>`;
-        } else {
-            html += `<td><input type="${inputType}" class="cell-input" value="${val}"></td>`;
-        }
+function rowHtml(vals = {}) {
+    let h = '<tr>';
+    state.cols.forEach(c => {
+        const v = vals[c.name] !== undefined ? vals[c.name] : '';
+        const t = c.type === 'number' ? 'number' : (c.type === 'date' ? 'date' : 'text');
+        h += c.type === 'boolean' 
+            ? `<td><input type="checkbox" class="cell" ${v?'checked':''}></td>`
+            : `<td><input type="${t}" class="cell" value="${v}"></td>`;
     });
-    html += `<td><button class="btn btn-secondary" style="padding:4px 8px;" onclick="this.closest('tr').remove(); updateStats();">X</button></td></tr>`;
-    return html;
+    return h + `<td><button class="btn" onclick="this.closest('tr').remove()">×</button></td></tr>`;
 }
 
 document.getElementById('add-row-btn').addEventListener('click', () => {
-    document.getElementById('table-body').insertAdjacentHTML('beforeend', generateRowHtml());
-    updateStats();
+    document.getElementById('tbody').insertAdjacentHTML('beforeend', rowHtml());
 });
 
-// Importar Excel
-const excelInput = document.getElementById('excel-file-input');
-excelInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+// Excel
+document.getElementById('excel-file-input').addEventListener('change', e => {
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = ev => {
         const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-        state.workbookInstance = wb;
-        const select = document.getElementById('sheet-select');
-        select.innerHTML = wb.SheetNames.map(s => `<option value="${s}">${s}</option>`).join('');
-        document.getElementById('sheet-selector-container').classList.remove('hidden');
-    };
-    reader.readAsArrayBuffer(file);
-});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        if(!json.length) return;
 
-document.getElementById('load-sheet-btn').addEventListener('click', () => {
-    const sheetName = document.getElementById('sheet-select').value;
-    const ws = state.workbookInstance.Sheets[sheetName];
-    const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
-    if (json.length === 0) return alert('Hoja vacía');
-
-    state.parentColumns = json[0].map(h => ({ name: String(h || 'Col'), type: 'string' }));
-    state.parentData = json.slice(1).map(row => {
-        const obj = {};
-        state.parentColumns.forEach((col, i) => obj[col.name] = row[i] !== undefined ? row[i] : '');
-        return obj;
-    });
-
-    renderEditableTable(state.parentData);
-    switchView('view-data');
-});
-
-// Motor Pivote / Derivación
-document.querySelector('[data-target="view-pivot"]').addEventListener('click', () => {
-    collectDOMData();
-    const sel = document.getElementById('pivot-filter-col');
-    sel.innerHTML = state.parentColumns.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-});
-
-function collectDOMData() {
-    const rows = document.querySelectorAll('#table-body tr');
-    state.parentData = [];
-    rows.forEach(row => {
-        const inputs = row.querySelectorAll('.cell-input');
-        const obj = {};
-        state.parentColumns.forEach((col, i) => {
-            obj[col.name] = col.type === 'boolean' ? inputs[i].checked : inputs[i].value;
+        state.cols = json[0].map(h => ({ name: String(h || 'Col'), type: 'string' }));
+        state.data = json.slice(1).map(row => {
+            const obj = {};
+            state.cols.forEach((c, i) => obj[c.name] = row[i] !== undefined ? row[i] : '');
+            return obj;
         });
-        state.parentData.push(obj);
+
+        renderTable(state.data);
+        goTo('data');
+    };
+    reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+// Pivotes
+function initPivot() {
+    collectDOM();
+    const sel = document.getElementById('pivot-filter-col');
+    sel.innerHTML = state.cols.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
+function collectDOM() {
+    state.data = [];
+    document.querySelectorAll('#tbody tr').forEach(row => {
+        const inputs = row.querySelectorAll('.cell');
+        const obj = {};
+        state.cols.forEach((c, i) => {
+            obj[c.name] = c.type === 'boolean' ? inputs[i].checked : inputs[i].value;
+        });
+        state.data.push(obj);
     });
 }
 
 document.getElementById('generate-child-btn').addEventListener('click', () => {
-    collectDOMData();
-    const filterCol = document.getElementById('pivot-filter-col').value;
-    const filterVal = document.getElementById('pivot-filter-val').value.trim().toLowerCase();
-    const childName = document.getElementById('new-child-name').value.trim() || 'SubBase';
-
-    const filtered = state.parentData.filter(r => !filterVal || String(r[filterCol] || '').toLowerCase().includes(filterVal));
+    collectDOM();
+    const col = document.getElementById('pivot-filter-col').value;
+    const val = document.getElementById('pivot-filter-val').value.trim().toLowerCase();
     
-    state.derivedCount++;
-    updateStats();
+    const filtered = state.data.filter(r => !val || String(r[col] || '').toLowerCase().includes(val));
 
-    let html = `<h3>Sub-base: ${childName} (${filtered.length} filas)</h3><table><thead><tr>`;
-    state.parentColumns.forEach(c => html += `<th>${c.name}</th>`);
-    html += '</tr></thead><tbody>';
+    let h = `<table><thead><tr>`;
+    state.cols.forEach(c => h += `<th>${c.name}</th>`);
+    h += '</tr></thead><tbody>';
     filtered.forEach(r => {
-        html += '<tr>';
-        state.parentColumns.forEach(c => html += `<td>${r[c.name]}</td>`);
-        html += '</tr>';
+        h += '<tr>';
+        state.cols.forEach(c => h += `<td>${r[c.name]}</td>`);
+        h += '</tr>';
     });
-    html += '</tbody></table>';
+    h += '</tbody></table>';
 
-    document.getElementById('child-table-container').innerHTML = html;
+    document.getElementById('child-table-container').innerHTML = h;
 });
