@@ -528,9 +528,14 @@
         <section id="screen-launcher" class="screen">
             <div class="brand-row">
                 <div class="brand">DataForge<small>CONSTRUCTOR DE DATOS</small></div>
-                <button onclick="startNewForm()" class="btn btn-gold btn-icon-only" title="Crear formulario">
-                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-                </button>
+                <div style="display:flex; gap:6px;">
+                    <button id="export-btn" onclick="exportAllData()" class="btn btn-ghost-gold btn-icon-only" title="Exportar datos" style="display:none;">
+                        <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v11"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M5 21h14"/></svg>
+                    </button>
+                    <button onclick="startNewForm()" class="btn btn-gold btn-icon-only" title="Crear formulario">
+                        <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                </div>
             </div>
 
             <div id="launcher-empty" class="empty-state" style="display:none;">
@@ -740,6 +745,18 @@
         return records.filter(r => recordHasData(formObj, r)).length;
     }
 
+    // Un registro es exportable si tiene datos propios, o si aunque
+    // esté vacío tiene descendientes (hijos, nietos, ...) con datos —
+    // así no se pierden compras reales solo porque la obra a la que
+    // pertenecen quedó con algún campo sin completar.
+    function recordIsExportable(formId, record) {
+        const formObj = getForm(formId);
+        if (recordHasData(formObj, record)) return true;
+        return getChildForms(formId).some(child =>
+            child.data.some(r => r._parentId === record._id && recordIsExportable(child.id, r))
+        );
+    }
+
     // ============================================================
     // RESOLUCIÓN JERÁRQUICA
     // ============================================================
@@ -803,6 +820,9 @@
         const listContainer = document.getElementById('launcher-list');
         const emptyState = document.getElementById('launcher-empty');
         listContainer.innerHTML = '';
+
+        const hasExportable = formsRegistry.some(f => f.data.some(r => recordIsExportable(f.id, r)));
+        document.getElementById('export-btn').style.display = hasExportable ? 'flex' : 'none';
 
         if (formsRegistry.length === 0) {
             emptyState.style.display = 'flex';
@@ -1317,7 +1337,86 @@
         renderRuntime();
     }
 
+    // ============================================================
+    // EXPORTAR DATOS
+    // Un CSV por formulario (listo para Excel/Sheets). Los
+    // formularios relacionados (con pivotFormId) agregan una primera
+    // columna con un dato identificador del registro padre, para no
+    // perder la relación aunque el CSV sea plano.
+    // ============================================================
+
+    function csvEscape(val) {
+        if (val === undefined || val === null) val = '';
+        val = String(val);
+        if (/[",\n]/.test(val)) val = '"' + val.replace(/"/g, '""') + '"';
+        return val;
+    }
+
+    function sanitizeFileName(name) {
+        return (name || '').trim().replace(/[^a-zA-Z0-9\-_ ]/g, '').replace(/\s+/g, '_');
+    }
+
+    function formToCSV(formObj) {
+        const records = formObj.data.filter(r => recordIsExportable(formObj.id, r));
+
+        let parentForm = null, parentLabelField = null;
+        const headerRow = formObj.fields.map(f => f.name);
+
+        if (formObj.pivotFormId) {
+            parentForm = getForm(formObj.pivotFormId);
+            parentLabelField = parentForm.fields[0] ? parentForm.fields[0].name : null;
+            headerRow.unshift(`${parentForm.title}${parentLabelField ? ' (' + parentLabelField + ')' : ''}`);
+        }
+
+        const rows = [headerRow];
+
+        records.forEach(r => {
+            const row = formObj.fields.map(f => {
+                let v = r[f.name];
+                if (f.type === 'checkbox') v = v ? 'Sí' : 'No';
+                return csvEscape(v);
+            });
+            if (parentForm) {
+                const parentRec = findRecordById(parentForm.id, r._parentId);
+                const label = parentRec && parentLabelField ? parentRec[parentLabelField] : '';
+                row.unshift(csvEscape(label));
+            }
+            rows.push(row);
+        });
+
+        // BOM al inicio para que Excel abra tildes/ñ correctamente
+        return '\uFEFF' + rows.map(row => row.join(',')).join('\r\n');
+    }
+
+    function downloadBlob(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function exportAllData() {
+        const exportableForms = formsRegistry.filter(f => f.data.some(r => recordIsExportable(f.id, r)));
+        if (exportableForms.length === 0) return;
+
+        // Pequeño desfase entre descargas: algunos navegadores bloquean
+        // o preguntan si se disparan varias descargas en el mismo instante.
+        exportableForms.forEach((formObj, i) => {
+            setTimeout(() => {
+                const csv = formToCSV(formObj);
+                const filename = `${sanitizeFileName(formObj.title) || 'formulario_' + formObj.id}.csv`;
+                downloadBlob(csv, filename, 'text/csv;charset=utf-8;');
+            }, i * 300);
+        });
+    }
+
     showLauncher();
 </script>
+
 </body>
 </html>
