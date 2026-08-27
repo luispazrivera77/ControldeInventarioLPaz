@@ -6,12 +6,14 @@
     <title>DataForge Mobile</title>
     <style>
         :root {
-            --bg: #000000;
-            --surface: #121212;
-            --phone-bg: #0a0a0a;
-            --border: #222222;
-            --text: #ffffff;
-            --text-dim: #777777;
+            --bg: #050505;
+            --phone-bg: #0f1015;
+            --surface: #1a1b22;
+            --surface-hover: #262733;
+            --border: #2a2b38;
+            --accent: #3b82f6;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
         }
 
         body {
@@ -26,69 +28,84 @@
             overflow: hidden;
         }
 
-        /* Contenedor del Celular */
+        /* Celular Estilizado (Mockup Fiel) */
         .phone-frame {
-            width: 340px;
-            height: 680px;
+            width: 360px;
+            height: 720px;
             background: var(--phone-bg);
-            border: 3px solid var(--border);
-            border-radius: 40px;
+            border: 6px solid #20212c;
+            border-radius: 48px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9), inset 0 0 10px rgba(255,255,255,0.05);
             position: relative;
         }
 
-        /* Pantallas dentro del celular */
+        /* Notch superior del celular */
+        .phone-notch {
+            width: 120px;
+            height: 18px;
+            background: #20212c;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            align-self: center;
+            position: absolute;
+            top: 0;
+            z-index: 10;
+        }
+
         .screen {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 30px 20px 20px 20px;
             box-sizing: border-box;
             overflow-y: auto;
         }
 
         .screen.hidden { display: none; }
 
-        /* Pantalla de Carga (Inicio) */
+        /* Inicio */
         .hero {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 25px;
             text-align: center;
         }
 
         .hero h1 {
-            font-size: 22px;
+            font-size: 24px;
             margin: 0;
-            letter-spacing: 1px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .btn-upload {
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 15px 25px;
-            border-radius: 12px;
+            padding: 16px 24px;
+            border-radius: 14px;
             font-size: 14px;
+            font-weight: 500;
             color: var(--text);
             cursor: pointer;
             transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        .btn-upload:hover { border-color: var(--text); }
+        .btn-upload:hover { border-color: var(--accent); background: var(--surface-hover); }
 
-        /* Pantalla de Formulario (Estilo AppSheet) */
+        /* Header Formulario */
         .form-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            font-size: 13px;
+            margin-bottom: 15px;
+            font-size: 12px;
             color: var(--text-dim);
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
@@ -98,13 +115,14 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 14px;
         }
 
         .form-field {
             display: flex;
             flex-direction: column;
             gap: 5px;
+            position: relative;
         }
 
         .form-field label {
@@ -112,6 +130,7 @@
             color: var(--text-dim);
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-field input {
@@ -119,12 +138,42 @@
             border: 1px solid var(--border);
             color: var(--text);
             padding: 12px;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 14px;
             outline: none;
+            transition: border-color 0.2s;
         }
 
-        /* Barra de navegación inferior tipo App */
+        .form-field input:focus { border-color: var(--accent); }
+
+        /* Lista Desplegable Estilizada (Autocomplete para Obra) */
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            max-height: 140px;
+            overflow-y: auto;
+            z-index: 20;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            margin-top: 4px;
+        }
+
+        .dropdown-item {
+            padding: 10px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: var(--surface-hover); color: var(--accent); }
+
+        /* Barra de Navegación */
         .nav-bar {
             display: flex;
             justify-content: space-between;
@@ -138,20 +187,24 @@
             background: var(--surface);
             border: 1px solid var(--border);
             color: var(--text);
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 13px;
+            font-weight: 500;
+            transition: 0.2s;
         }
 
-        .nav-btn:hover { background: #222; }
+        .nav-btn:hover { background: var(--surface-hover); border-color: var(--accent); }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
     <div class="phone-frame">
-        <!-- Pantalla 1: Carga de Archivo -->
+        <div class="phone-notch"></div>
+
+        <!-- Pantalla 1: Carga -->
         <section id="screen-home" class="screen">
             <div class="hero">
                 <h1>DataForge</h1>
@@ -162,16 +215,14 @@
             </div>
         </section>
 
-        <!-- Pantalla 2: Vista Formulario tipo AppSheet -->
+        <!-- Pantalla 2: Formulario -->
         <section id="screen-form" class="screen hidden">
             <div class="form-header">
                 <span id="record-indicator">Registro 1 de 1</span>
-                <span id="file-name-label" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                <span id="file-name-label" style="max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
             </div>
 
-            <div id="form-card" class="form-card">
-                <!-- Los campos del formulario se inyectarán aquí -->
-            </div>
+            <div id="form-card" class="form-card"></div>
 
             <div class="nav-bar">
                 <button id="prev-btn" class="nav-btn">◀ Ant</button>
@@ -181,7 +232,7 @@
     </div>
 
     <script>
-        let state = { cols: [], data: [] };
+        let state = { cols: [], data: [], obrasList: [] };
         let currentIndex = 0;
 
         const excelInput = document.getElementById('excel-file-input');
@@ -205,7 +256,7 @@
                     const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
                     if (!json.length || json.length < 2) {
-                        alert('El archivo está vacío o no tiene registros.');
+                        alert('El archivo está vacío o sin datos.');
                         return;
                     }
 
@@ -217,6 +268,13 @@
                         });
                         return obj;
                     });
+
+                    // Detectar si existe una columna llamada "Obra" (o similar) para alimentar la lista inteligente
+                    const obraColKey = state.cols.find(c => c.toLowerCase().includes('obra'));
+                    if (obraColKey) {
+                        const uniqueObras = [...new Set(state.data.map(r => String(r[obraColKey] || '').trim()))];
+                        state.obrasList = uniqueObras.filter(o => o !== '');
+                    }
 
                     currentIndex = 0;
                     renderForm();
@@ -237,21 +295,64 @@
             let html = '';
             state.cols.forEach(col => {
                 const val = record[col] !== undefined ? record[col] : '';
-                html += `
-                    <div class="form-field">
-                        <label>${col}</label>
-                        <input type="text" data-col="${col}" value="${val}">
-                    </div>
-                `;
+                const isObraField = col.toLowerCase().includes('obra');
+
+                html += `<div class="form-field"><label>${col}</label>`;
+                
+                if (isObraField && state.obrasList.length > 0) {
+                    html += `
+                        <input type="text" class="input-obra" data-col="${col}" value="${val}" autocomplete="off" placeholder="Seleccionar o buscar obra...">
+                        <div class="dropdown-list"></div>
+                    `;
+                } else {
+                    html += `<input type="text" data-col="${col}" value="${val}">`;
+                }
+                
+                html += `</div>`;
             });
 
             formCard.innerHTML = html;
             recordIndicator.textContent = `Registro ${currentIndex + 1} de ${state.data.length}`;
+            setupObraAutocomplete();
+        }
+
+        function setupObraAutocomplete() {
+            const obraInput = formCard.querySelector('.input-obra');
+            if (!obraInput) return;
+
+            const dropdown = obraInput.nextElementSibling;
+
+            function showDropdown(filterText = '') {
+                const filtered = state.obrasList.filter(o => o.toLowerCase().includes(filterText.toLowerCase()));
+                if (filtered.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+                dropdown.innerHTML = filtered.map(item => `<div class="dropdown-item">${item}</div>`).join('');
+                dropdown.style.display = 'block';
+
+                dropdown.querySelectorAll('.dropdown-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        obraInput.value = el.textContent;
+                        dropdown.style.display = 'none';
+                        saveCurrent();
+                    });
+                });
+            }
+
+            obraInput.addEventListener('focus', () => showDropdown(obraInput.value));
+            obraInput.addEventListener('input', () => showDropdown(obraInput.value));
+
+            document.addEventListener('click', (e) => {
+                if (!obraInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
         }
 
         function saveCurrent() {
             if (state.data.length === 0) return;
-            const inputs = formCard.querySelectorAll('input');
+            const inputs = formCard.querySelectorAll('input[data-col]');
             inputs.forEach(input => {
                 state.data[currentIndex][input.dataset.col] = input.value;
             });
