@@ -499,7 +499,6 @@
         }
 
         function renderRuntime() {
-            saveCurrentRuntimeData();
             const formObj = formsRegistry.find(f => f.id === activeFormId);
             
             document.getElementById('runtime-tier-badge').textContent = `F#${formObj.id}`;
@@ -511,7 +510,7 @@
             if (formObj.pivotFormId) {
                 const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
                 if (parentForm && parentForm.data.length > 0) {
-                    const parentRec = parentForm.data[0] || {};
+                    const parentRec = parentForm.data[activeRecordIndex] || parentForm.data[0] || {};
                     activePivotVal = parentRec[formObj.pivotField] || "(Sin valor)";
                 }
             }
@@ -567,15 +566,9 @@
             const formObj = formsRegistry.find(f => f.id === activeFormId);
             const listLen = formObj.data.length;
             
-            // Si intentamos avanzar y estamos en el último registro, creamos uno nuevo automáticamente en blanco
-            if (direction > 0 && activeRecordIndex === listLen - 1) {
-                formObj.data.push({});
-                activeRecordIndex = formObj.data.length - 1;
-            } else {
-                activeRecordIndex += direction;
-                if (activeRecordIndex < 0) activeRecordIndex = 0;
-                if (activeRecordIndex >= listLen) activeRecordIndex = listLen - 1;
-            }
+            activeRecordIndex += direction;
+            if (activeRecordIndex < 0) activeRecordIndex = 0;
+            if (activeRecordIndex >= listLen) activeRecordIndex = listLen - 1;
             renderRuntime();
         }
 
