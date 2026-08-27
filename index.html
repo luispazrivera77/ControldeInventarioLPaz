@@ -3,77 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge Form Studio</title>
-    <link rel="stylesheet" href="style.css">
+    <title>DataForge Mobile</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #121212;
+            --phone-bg: #0a0a0a;
+            --border: #222222;
+            --text: #ffffff;
+            --text-dim: #777777;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Contenedor del Celular */
+        .phone-frame {
+            width: 340px;
+            height: 680px;
+            background: var(--phone-bg);
+            border: 3px solid var(--border);
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* Pantallas dentro del celular */
+        .screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .screen.hidden { display: none; }
+
+        /* Pantalla de Carga (Inicio) */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 22px;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .btn-upload {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-upload:hover { border-color: var(--text); }
+
+        /* Pantalla de Formulario (Estilo AppSheet) */
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .form-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-field label {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .form-field input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* Barra de navegación inferior tipo App */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .nav-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .nav-btn:hover { background: #222; }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="app">
-        <!-- Barra de Navegación por Iconos -->
-        <nav class="dock">
-            <button class="dock-btn active" data-view="home" title="Inicio">🏠</button>
-            <button class="dock-btn" data-view="schema" title="Estructura">⚡</button>
-            <button class="dock-btn" data-view="data" title="Formularios">📋</button>
-            <button class="dock-btn" data-view="pivot" title="Pivotes">🎯</button>
-        </nav>
 
-        <!-- Contenedor de Pantallas -->
-        <main class="viewport">
-            <!-- Pantalla 1: Inicio -->
-            <section id="home" class="screen">
-                <div class="hero">
-                    <h1>DataForge</h1>
-                    <div class="actions-grid">
-                        <label class="btn-card accent">
-                            📁 Subir Excel / CSV
-                            <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" hidden>
-                        </label>
-                        <button class="btn-card" onclick="goTo('schema')">✏️ Crear Manual</button>
-                    </div>
-                </div>
-            </section>
+    <div class="phone-frame">
+        <!-- Pantalla 1: Carga de Archivo -->
+        <section id="screen-home" class="screen">
+            <div class="hero">
+                <h1>DataForge</h1>
+                <label class="btn-upload">
+                    📂 Cargar Excel / CSV
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" hidden>
+                </label>
+            </div>
+        </section>
 
-            <!-- Pantalla 2: Estructura -->
-            <section id="schema" class="screen hidden">
-                <div class="toolbar">
-                    <input type="text" id="col-name" placeholder="Nombre...">
-                    <select id="col-type">
-                        <option value="string">Texto</option>
-                        <option value="number">Número</option>
-                        <option value="date">Fecha</option>
-                        <option value="boolean">Sí/No</option>
-                    </select>
-                    <button id="add-col-btn" class="btn icon-btn">＋</button>
-                </div>
-                <div id="columns-chips" class="chips-container"></div>
-                <button id="create-table-btn" class="btn primary-btn hidden">Generar Formularios ➔</button>
-            </section>
+        <!-- Pantalla 2: Vista Formulario tipo AppSheet -->
+        <section id="screen-form" class="screen hidden">
+            <div class="form-header">
+                <span id="record-indicator">Registro 1 de 1</span>
+                <span id="file-name-label" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+            </div>
 
-            <!-- Pantalla 3: Vista de Formulario -->
-            <section id="data" class="screen hidden">
-                <div class="toolbar">
-                    <button id="prev-row-btn" class="btn">◀</button>
-                    <span id="record-indicator" style="align-self: center; font-size: 14px; color: var(--text-dim);">0 / 0</span>
-                    <button id="next-row-btn" class="btn">▶</button>
-                    <button id="add-form-btn" class="btn primary-btn">＋ Nuevo</button>
-                    <button onclick="goTo('pivot')" class="btn">Pivotes ➔</button>
-                </div>
-                <div class="form-card-container">
-                    <div id="form-card" class="form-card"></div>
-                </div>
-            </section>
+            <div id="form-card" class="form-card">
+                <!-- Los campos del formulario se inyectarán aquí -->
+            </div>
 
-            <!-- Pantalla 4: Pivotes -->
-            <section id="pivot" class="screen hidden">
-                <div class="toolbar">
-                    <select id="pivot-filter-col"></select>
-                    <input type="text" id="pivot-filter-val" placeholder="Filtrar por...">
-                    <button id="generate-child-btn" class="btn primary-btn">Derivar</button>
-                </div>
-                <div id="child-table-container"></div>
-            </section>
-        </main>
+            <div class="nav-bar">
+                <button id="prev-btn" class="nav-btn">◀ Ant</button>
+                <button id="next-btn" class="nav-btn">Sig ▶</button>
+            </div>
+        </section>
     </div>
-    <script src="app.js"></script>
+
+    <script>
+        let state = { cols: [], data: [] };
+        let currentIndex = 0;
+
+        const excelInput = document.getElementById('excel-file-input');
+        const screenHome = document.getElementById('screen-home');
+        const screenForm = document.getElementById('screen-form');
+        const formCard = document.getElementById('form-card');
+        const recordIndicator = document.getElementById('record-indicator');
+        const fileNameLabel = document.getElementById('file-name-label');
+
+        excelInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            fileNameLabel.textContent = file.name;
+            const reader = new FileReader();
+
+            reader.onload = ev => {
+                try {
+                    const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+                    if (!json.length || json.length < 2) {
+                        alert('El archivo está vacío o no tiene registros.');
+                        return;
+                    }
+
+                    state.cols = json[0].map(h => String(h || 'Columna'));
+                    state.data = json.slice(1).map(row => {
+                        const obj = {};
+                        state.cols.forEach((col, i) => {
+                            obj[col] = row[i] !== undefined ? row[i] : '';
+                        });
+                        return obj;
+                    });
+
+                    currentIndex = 0;
+                    renderForm();
+
+                    screenHome.classList.add('hidden');
+                    screenForm.classList.remove('hidden');
+                } catch (err) {
+                    alert('Error al leer el archivo.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function renderForm() {
+            if (state.data.length === 0) return;
+            const record = state.data[currentIndex];
+            
+            let html = '';
+            state.cols.forEach(col => {
+                const val = record[col] !== undefined ? record[col] : '';
+                html += `
+                    <div class="form-field">
+                        <label>${col}</label>
+                        <input type="text" data-col="${col}" value="${val}">
+                    </div>
+                `;
+            });
+
+            formCard.innerHTML = html;
+            recordIndicator.textContent = `Registro ${currentIndex + 1} de ${state.data.length}`;
+        }
+
+        function saveCurrent() {
+            if (state.data.length === 0) return;
+            const inputs = formCard.querySelectorAll('input');
+            inputs.forEach(input => {
+                state.data[currentIndex][input.dataset.col] = input.value;
+            });
+        }
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            saveCurrent();
+            if (currentIndex < state.data.length - 1) {
+                currentIndex++;
+                renderForm();
+            }
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            saveCurrent();
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderForm();
+            }
+        });
+    </script>
 </body>
 </html>
