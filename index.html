@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge Multi-Form Studio</title>
+    <title>DataForge Multi-Form AppStudio</title>
     <style>
         :root {
             --bg: #050505;
@@ -93,7 +93,7 @@
             flex-direction: column;
             gap: 10px;
             flex: 1;
-            max-height: 240px;
+            max-height: 220px;
             overflow-y: auto;
         }
 
@@ -279,7 +279,7 @@
             </div>
 
             <div style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Campos</div>
-            <div id="builder-fields-container" class="builder-container" style="max-height: 180px;"></div>
+            <div id="builder-fields-container" class="builder-container" style="max-height: 160px;"></div>
 
             <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
                 <button type="button" onclick="addBuilderField()" class="btn">＋ Añadir campo</button>
@@ -287,7 +287,7 @@
             </div>
         </section>
 
-        <!-- Pantalla de Ejecución / Runtime -->
+        <!-- Pantalla de Ejecución / Runtime Maestro-Detalle -->
         <section id="screen-runtime" class="screen hidden">
             <div class="form-header">
                 <div>
@@ -313,13 +313,42 @@
     </div>
 
     <script>
+        // Registro inicial con la estructura Maestro-Detalle sugerida (Obra -> Compras -> Actividades)
         let formsRegistry = [
             {
                 id: 1,
                 title: "Obras",
                 pivotFormId: null,
                 pivotField: "",
-                fields: [{ name: "Nombre Obra", type: "text" }],
+                fields: [
+                    { name: "Nombre Obra", type: "text" },
+                    { name: "Cliente", type: "text" },
+                    { name: "Ubicación", type: "text" }
+                ],
+                data: [{}]
+            },
+            {
+                id: 2,
+                title: "Compras",
+                pivotFormId: 1,
+                pivotField: "Nombre Obra",
+                fields: [
+                    { name: "Proveedor", type: "text" },
+                    { name: "N° Documento", type: "text" },
+                    { name: "Total", type: "number" }
+                ],
+                data: [{}]
+            },
+            {
+                id: 3,
+                title: "Actividades",
+                pivotFormId: 2,
+                pivotField: "N° Documento",
+                fields: [
+                    { name: "Descripción", type: "text" },
+                    { name: "Fecha", type: "date" },
+                    { name: "Estado", type: "text" }
+                ],
                 data: [{}]
             }
         ];
@@ -498,24 +527,60 @@
             renderRuntime();
         }
 
+        // Obtener la lista de registros filtrada jerárquicamente según el contexto del padre (Maestro-Detalle)
+        function getFilteredRecordsForActiveForm() {
+            const formObj = formsRegistry.find(f => f.id === activeFormId);
+            if (!formObj.pivotFormId || !formObj.pivotField) {
+                return formObj.data;
+            }
+
+            const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
+            if (!parentForm || parentForm.data.length === 0) {
+                return [];
+            }
+
+            // Seleccionamos el valor activo del registro padre actual
+            const parentIndex = window['parentIndex_' + activeFormId] || 0;
+            const parentRecord = parentForm.data[parentIndex] || parentForm.data[0] || {};
+            const activeParentValue = parentRecord[formObj.pivotField];
+
+            if (!activeParentValue) {
+                return []; // Si el padre no tiene valor en el campo pivote, el hijo no muestra registros o se aísla
+            }
+
+            // Filtramos los registros del hijo que coincidan con la clave foránea contextual
+            return formObj.data.filter(rec => rec['__parentId'] === activeParentValue);
+        }
+
         function renderRuntime() {
+            saveCurrentRuntimeData();
             const formObj = formsRegistry.find(f => f.id === activeFormId);
             
             document.getElementById('runtime-tier-badge').textContent = `F#${formObj.id}`;
             document.getElementById('runtime-title').textContent = formObj.title;
 
-            let recordList = formObj.data;
+            let recordList = getFilteredRecordsForActiveForm();
             let activePivotVal = null;
 
-            if (formObj.pivotFormId) {
+            if (formObj.pivotFormId && formObj.pivotField) {
                 const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
-                if (parentForm && parentForm.data.length > 0) {
-                    const parentRec = parentForm.data[activeRecordIndex] || parentForm.data[0] || {};
-                    activePivotVal = parentRec[formObj.pivotField] || "(Sin valor)";
-                }
+                const parentIndex = window['parentIndex_' + activeFormId] || 0;
+                const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
+                activePivotVal = parentRec[formObj.pivotField] || "(Sin valor en el padre)";
             }
 
-            if (recordList.length === 0) recordList = [{}];
+            if (recordList.length === 0) {
+                // Si es un formulario hijo y no hay registros para este padre, inicializamos uno con la FK vinculada automáticamente
+                const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
+                const parentIndex = window['parentIndex_' + activeFormId] || 0;
+                const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
+                
+                const newRec = { '__parentId': parentRec[formObj.pivotField] };
+                formObj.data.push(newRec);
+                recordList = getFilteredRecordsForActiveForm();
+                activeRecordIndex = 0;
+            }
+
             if (activeRecordIndex >= recordList.length) activeRecordIndex = recordList.length - 1;
             if (activeRecordIndex < 0) activeRecordIndex = 0;
 
@@ -524,8 +589,9 @@
 
             let html = '';
             if (formObj.pivotFormId && formObj.pivotField) {
-                html += `<div style="background:var(--surface-hover); padding:6px 10px; border-radius:6px; font-size:11px; border-left:3px solid var(--purple);">
-                    Relación (${formObj.pivotField}): <strong>${activePivotVal}</strong>
+                html += `<div style="background:var(--surface-hover); padding:6px 10px; border-radius:6px; font-size:11px; border-left:3px solid var(--purple); display:flex; justify-content:space-between; align-items:center;">
+                    <span>Relación (${formObj.pivotField}): <strong>${activePivotVal}</strong></span>
+                    <button onclick="changeParentContext(-1)" class="btn" style="padding:2px 6px; font-size:9px;">Cambiar Padre 🔄</button>
                 </div>`;
             }
 
@@ -551,32 +617,68 @@
             const inputs = document.querySelectorAll('#runtime-card .r-input');
             if (inputs.length === 0) return;
             
-            if (!formObj.data[activeRecordIndex]) {
-                formObj.data[activeRecordIndex] = {};
+            let recordList = getFilteredRecordsForActiveForm();
+            let currentRecord = recordList[activeRecordIndex];
+
+            if (!currentRecord) {
+                currentRecord = {};
+                if (formObj.pivotFormId && formObj.pivotField) {
+                    const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
+                    const parentIndex = window['parentIndex_' + activeFormId] || 0;
+                    const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
+                    currentRecord['__parentId'] = parentRec[formObj.pivotField];
+                }
+                formObj.data.push(currentRecord);
             }
 
-            const obj = formObj.data[activeRecordIndex];
             inputs.forEach(input => {
-                obj[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
+                currentRecord[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
             });
+        }
+
+        // Permite alternar entre los registros del formulario padre para consultar los hijos correspondientes (maestro-detalle real)
+        function changeParentContext(dir) {
+            saveCurrentRuntimeData();
+            const formObj = formsRegistry.find(f => f.id === activeFormId);
+            const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
+            if (!parentForm) return;
+
+            let pIdxKey = 'parentIndex_' + activeFormId;
+            if (window[pIdxKey] === undefined) window[pIdxKey] = 0;
+
+            window[pIdxKey] += dir;
+            if (window[pIdxKey] < 0) window[pIdxKey] = 0;
+            if (window[pIdxKey] >= parentForm.data.length) window[pIdxKey] = parentForm.data.length - 1;
+
+            activeRecordIndex = 0;
+            renderRuntime();
         }
 
         function changeRecord(direction) {
             saveCurrentRuntimeData();
-            const formObj = formsRegistry.find(f => f.id === activeFormId);
-            const listLen = formObj.data.length;
+            const recordList = getFilteredRecordsForActiveForm();
             
             activeRecordIndex += direction;
             if (activeRecordIndex < 0) activeRecordIndex = 0;
-            if (activeRecordIndex >= listLen) activeRecordIndex = listLen - 1;
+            if (activeRecordIndex >= recordList.length) activeRecordIndex = recordList.length - 1;
             renderRuntime();
         }
 
         function addNewRecord() {
             saveCurrentRuntimeData();
             const formObj = formsRegistry.find(f => f.id === activeFormId);
-            formObj.data.push({});
-            activeRecordIndex = formObj.data.length - 1;
+            
+            const newRec = {};
+            if (formObj.pivotFormId && formObj.pivotField) {
+                const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
+                const parentIndex = window['parentIndex_' + activeFormId] || 0;
+                const parentRec = parentForm.data[parentIndex] || parentForm.data[0] || {};
+                newRec['__parentId'] = parentRec[formObj.pivotField];
+            }
+
+            formObj.data.push(newRec);
+            const recordList = getFilteredRecordsForActiveForm();
+            activeRecordIndex = recordList.length - 1;
             renderRuntime();
         }
 
