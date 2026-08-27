@@ -131,7 +131,6 @@
         .btn-success { background: var(--success); border: none; }
         .btn-danger { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
 
-        /* Pantalla de Lanzador / Menú de Íconos */
         .app-launcher-grid {
             display: flex;
             flex-direction: column;
@@ -248,7 +247,7 @@
     <div class="phone-frame">
         <div class="phone-notch"></div>
 
-        <!-- Pantalla de Lanzador / Menú Principal de Formularios -->
+        <!-- Pantalla de Lanzador / Menú Principal -->
         <section id="screen-launcher" class="screen">
             <div class="top-menu-bar">
                 <h2>Mis Formularios</h2>
@@ -259,7 +258,7 @@
             <div id="launcher-list" class="app-launcher-grid"></div>
         </section>
 
-        <!-- Pantalla de Diseñador de Formulario Dinámico -->
+        <!-- Pantalla de Diseñador de Formulario -->
         <section id="screen-builder" class="screen hidden">
             <div class="top-menu-bar">
                 <span id="builder-step-label" style="background:var(--accent); color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;">Diseñador</span>
@@ -288,7 +287,7 @@
             </div>
         </section>
 
-        <!-- Pantalla de Ejecución / Runtime Estilo AppSheet -->
+        <!-- Pantalla de Ejecución / Runtime -->
         <section id="screen-runtime" class="screen hidden">
             <div class="form-header">
                 <div>
@@ -308,13 +307,12 @@
 
             <div style="display: flex; gap: 6px; margin-top: 8px;">
                 <button onclick="showLauncher()" class="btn" style="flex:1; font-size:11px;">📱 Menú Apps</button>
-                <button onclick="editCurrentFormStructure()" class="btn btn-danger" style="flex:1; font-size:11px;">⚙️ Editar Estructura</button>
+                <button onclick="editCurrentFormStructure()" class="btn btn-danger" style="flex:1; font-size:11px;">⚙️ Editar</button>
             </div>
         </section>
     </div>
 
     <script>
-        // Almacén central de formularios creados dinámicamente
         let formsRegistry = [
             {
                 id: 1,
@@ -341,7 +339,7 @@
             const listContainer = document.getElementById('launcher-list');
             listContainer.innerHTML = '';
 
-            formsRegistry.forEach((form, idx) => {
+            formsRegistry.forEach((form) => {
                 const isRelated = form.pivotFormId !== null && form.pivotFormId !== "" && form.pivotFormId !== undefined;
                 
                 const card = document.createElement('div');
@@ -370,7 +368,7 @@
             formsRegistry.push({
                 id: newId,
                 title: `Formulario ${newId}`,
-                pivotFormId: "",
+                pivotFormId: null,
                 pivotField: "",
                 fields: [{ name: "Detalle", type: "text" }],
                 data: [{}]
@@ -388,12 +386,11 @@
             document.getElementById('builder-step-label').textContent = `Formulario #${formObj.id}`;
             document.getElementById('form-title-input').value = formObj.title;
 
-            // Configurar opciones de pivote si hay formularios anteriores disponibles
             const pivotSection = document.getElementById('pivot-section');
             const pivotSelect = document.getElementById('form-pivot-source');
 
             const previousForms = formsRegistry.filter(f => f.id !== formObj.id);
-            if (previousForms.length > 0 && formObj.id > 1) {
+            if (previousForms.length > 0) {
                 pivotSection.style.display = 'block';
                 pivotSelect.innerHTML = `<option value="">-- Sin relación pivote (Independiente) --</option>`;
                 
@@ -514,8 +511,8 @@
             if (formObj.pivotFormId) {
                 const parentForm = formsRegistry.find(f => f.id === formObj.pivotFormId);
                 if (parentForm && parentForm.data.length > 0) {
-                    // Tomamos el primer registro padre o contextual
-                    activePivotVal = parentForm.data[0][formObj.pivotField] || "(Sin valor)";
+                    const parentRec = parentForm.data[0] || {};
+                    activePivotVal = parentRec[formObj.pivotField] || "(Sin valor)";
                 }
             }
 
@@ -555,11 +552,14 @@
             const inputs = document.querySelectorAll('#runtime-card .r-input');
             if (inputs.length === 0) return;
             
-            const obj = formObj.data[activeRecordIndex] || {};
+            if (!formObj.data[activeRecordIndex]) {
+                formObj.data[activeRecordIndex] = {};
+            }
+
+            const obj = formObj.data[activeRecordIndex];
             inputs.forEach(input => {
                 obj[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
             });
-            formObj.data[activeRecordIndex] = obj;
         }
 
         function changeRecord(direction) {
@@ -580,7 +580,6 @@
             renderRuntime();
         }
 
-        // Iniciar directamente en el menú principal
         showLauncher();
     </script>
 </body>
