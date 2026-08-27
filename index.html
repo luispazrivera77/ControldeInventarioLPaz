@@ -421,8 +421,83 @@
 
     .nav-bar .btn { flex: 1; }
 
+    .record-actions-row { display: flex; gap: 7px; margin-top: 8px; }
+    .record-actions-row .btn { flex: 1; font-size: 11px; }
+
     .action-row { display: flex; gap: 7px; margin-top: 8px; }
     .action-row .btn { flex: 1; font-size: 11.5px; }
+
+    .btn-saved {
+        background: var(--success) !important;
+        border-color: var(--success) !important;
+        color: #06251b !important;
+    }
+
+    /* ---------- Toggle vista tabla ---------- */
+    .view-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-dim);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 4px 4px;
+        cursor: pointer;
+    }
+
+    .view-toggle-opt {
+        padding: 4px 9px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .view-toggle-opt.active { background: var(--gold); color: #1a1409; font-weight: 600; }
+
+    /* ---------- Tabla de registros ---------- */
+    .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+
+    table.records-table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11.5px;
+    }
+
+    table.records-table th {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-dim);
+        text-align: left;
+        padding: 9px 10px;
+        background: var(--surface-2);
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+    }
+
+    table.records-table td {
+        padding: 9px 10px;
+        border-top: 1px solid var(--border);
+        white-space: nowrap;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text);
+    }
+
+    table.records-table tr.table-row { cursor: pointer; transition: 0.12s; }
+    table.records-table tr.table-row:hover td { background: var(--surface-hover); }
+    table.records-table tr.table-row-active td { background: var(--gold-soft); }
 
     .top-bar {
         display: flex;
@@ -519,29 +594,51 @@
                     <span id="runtime-depth-dot" class="depth-dot"></span>
                     <strong id="runtime-title">Formulario</strong>
                 </div>
-                <span id="record-indicator">1 / 1</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="record-indicator">1 / 1</span>
+                    <div id="view-toggle" class="view-toggle" style="display:none;">
+                        <span class="view-toggle-opt" data-mode="record" onclick="setViewMode('record')">
+                            <svg class="ic" viewBox="0 0 24 24" style="width:11px;height:11px;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                        </span>
+                        <span class="view-toggle-opt" data-mode="table" onclick="setViewMode('table')">
+                            <svg class="ic" viewBox="0 0 24 24" style="width:11px;height:11px;"><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div class="runtime-scroll">
                 <div id="runtime-card" class="form-card"></div>
+                <div id="runtime-table" style="display:none;"></div>
                 <div id="children-section" class="thread" style="display:none;">
                     <div class="thread-label">Formularios relacionados</div>
                     <div id="children-list" class="thread-list"></div>
                 </div>
             </div>
 
-            <div class="nav-bar">
+            <div id="record-nav-bar" class="nav-bar">
                 <button onclick="changeRecord(-1)" class="btn">
                     <svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
                     Anterior
                 </button>
-                <button onclick="addNewRecord()" class="btn btn-ghost-gold">
-                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-                    Nuevo
-                </button>
                 <button onclick="changeRecord(1)" class="btn">
                     Siguiente
                     <svg class="ic" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+
+            <div class="record-actions-row">
+                <button id="save-btn" onclick="saveCurrentRecordExplicit()" class="btn btn-gold">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+                    Guardar
+                </button>
+                <button onclick="clearCurrentRecord()" class="btn btn-danger-outline">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+                    Limpiar
+                </button>
+                <button onclick="addNewRecord()" class="btn btn-ghost-gold">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    Nuevo
                 </button>
             </div>
 
@@ -583,6 +680,21 @@
     let activeFormId = null;
     let editingFormId = null;
     let navStack = [];
+    let viewMode = 'record'; // 'record' | 'table'
+
+    // Id del registro que está EFECTIVAMENTE mostrado en los inputs
+    // del DOM en este momento. Guardar siempre escribe sobre este
+    // registro específico (buscado por _id), nunca sobre "el que sea
+    // que el índice activo apunte ahora" — así, si el índice cambia
+    // (por ejemplo al crear un registro nuevo) antes de que el DOM se
+    // haya vuelto a dibujar, nunca se mezclan datos entre registros.
+    let renderedRecordId = null;
+
+    function findRecordById(formId, recordId) {
+        const formObj = getForm(formId);
+        if (!formObj || recordId === null || recordId === undefined) return null;
+        return formObj.data.find(r => r._id === recordId) || null;
+    }
 
     const DEPTH_COLORS = ['var(--depth-0)', 'var(--depth-1)', 'var(--depth-2)', 'var(--depth-3)'];
 
@@ -658,6 +770,8 @@
         saveCurrentRuntimeData();
         navStack = [];
         activeFormId = null;
+        renderedRecordId = null;
+        viewMode = 'record';
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
         document.getElementById('screen-launcher').classList.remove('hidden');
         renderLauncherList();
@@ -849,6 +963,7 @@
     }
 
     function editCurrentFormStructure() {
+        saveCurrentRuntimeData();
         editFormStructure(activeFormId);
     }
 
@@ -867,6 +982,7 @@
         }
 
         activeFormId = formId;
+        viewMode = 'record';
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
         document.getElementById('screen-runtime').classList.remove('hidden');
         renderRuntime();
@@ -877,6 +993,7 @@
         const prevId = navStack.pop();
         if (prevId === undefined) { showLauncher(); return; }
         activeFormId = prevId;
+        viewMode = 'record';
         renderRuntime();
     }
 
@@ -893,7 +1010,12 @@
     }
 
     function renderRuntime() {
-        saveCurrentRuntimeData();
+        // OJO: no se llama a saveCurrentRuntimeData() aquí. Cada acción
+        // que transiciona de registro, de formulario o de pantalla ya
+        // guarda explícitamente ANTES de llamar a renderRuntime(). Si
+        // esta función guardara también, podría hacerlo usando el
+        // índice/registro nuevo mientras el DOM todavía muestra los
+        // valores del registro anterior, copiando datos entre registros.
         const formObj = getForm(activeFormId);
 
         document.getElementById('runtime-breadcrumb').innerHTML = buildBreadcrumb();
@@ -912,6 +1034,42 @@
         activeIndexByForm[formObj.id] = idx;
 
         const record = recordList[idx] || {};
+        document.getElementById('record-indicator').textContent = `${recordList.length ? idx + 1 : 0} / ${recordList.length}`;
+
+        // Alternador de vista tabla/registro: solo tiene sentido con 2+ registros
+        const toggle = document.getElementById('view-toggle');
+        if (recordList.length >= 2) {
+            toggle.style.display = 'flex';
+            toggle.querySelectorAll('.view-toggle-opt').forEach(el => {
+                el.classList.toggle('active', el.dataset.mode === viewMode);
+            });
+        } else {
+            toggle.style.display = 'none';
+            viewMode = 'record';
+        }
+
+        const recordNavBar = document.getElementById('record-nav-bar');
+        const cardEl = document.getElementById('runtime-card');
+        const tableEl = document.getElementById('runtime-table');
+
+        if (viewMode === 'table') {
+            recordNavBar.style.display = 'none';
+            cardEl.style.display = 'none';
+            tableEl.style.display = 'block';
+            renderRecordsTable(formObj, recordList, idx);
+            renderedRecordId = null; // en vista tabla no hay un único registro "en edición"
+        } else {
+            recordNavBar.style.display = 'flex';
+            cardEl.style.display = 'flex';
+            tableEl.style.display = 'none';
+            renderSingleRecordCard(formObj, record);
+            renderedRecordId = record._id !== undefined ? record._id : null;
+        }
+
+        renderChildrenSection(formObj.id, record);
+    }
+
+    function renderSingleRecordCard(formObj, record) {
         const card = document.getElementById('runtime-card');
         let html = '';
 
@@ -934,9 +1092,45 @@
         });
 
         card.innerHTML = html || `<p class="subtitle">Este formulario todavía no tiene datos definidos.</p>`;
-        document.getElementById('record-indicator').textContent = `${recordList.length ? idx + 1 : 0} / ${recordList.length}`;
+    }
 
-        renderChildrenSection(formObj.id, record);
+    function renderRecordsTable(formObj, recordList, activeIdx) {
+        const tableEl = document.getElementById('runtime-table');
+        const cols = formObj.fields;
+
+        let html = `<div class="table-wrap"><table class="records-table"><thead><tr>`;
+        cols.forEach(f => { html += `<th>${f.name}</th>`; });
+        html += `</tr></thead><tbody>`;
+
+        recordList.forEach((rec, i) => {
+            html += `<tr class="table-row ${i === activeIdx ? 'table-row-active' : ''}" data-idx="${i}">`;
+            cols.forEach(f => {
+                let val = rec[f.name];
+                if (f.type === 'checkbox') val = val ? '✓' : '—';
+                else if (val === undefined || val === '') val = '—';
+                html += `<td>${val}</td>`;
+            });
+            html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        tableEl.innerHTML = html;
+
+        tableEl.querySelectorAll('tr.table-row').forEach(row => {
+            row.onclick = () => selectRecordFromTable(parseInt(row.dataset.idx));
+        });
+    }
+
+    function setViewMode(mode) {
+        viewMode = mode;
+        renderRuntime();
+    }
+
+    function selectRecordFromTable(idx) {
+        activeIndexByForm[activeFormId] = idx;
+        resetDescendantIndices(activeFormId);
+        viewMode = 'record';
+        renderRuntime();
     }
 
     function renderChildrenSection(formId, currentRecord) {
@@ -974,21 +1168,54 @@
     }
 
     function saveCurrentRuntimeData() {
-        if (!activeFormId) return;
-        const formObj = getForm(activeFormId);
-        if (!formObj) return;
+        if (!activeFormId || renderedRecordId === null) return;
+        if (viewMode !== 'record') return; // en vista tabla no hay inputs que leer
 
         const inputs = document.querySelectorAll('#runtime-card .r-input');
         if (inputs.length === 0) return;
 
-        const list = getVisibleRecords(formObj.id);
-        const idx = activeIndexByForm[formObj.id] || 0;
-        const currentRecord = list[idx];
+        // Se guarda SIEMPRE sobre el registro cuyo _id coincide con lo
+        // que hay dibujado en el DOM ahora mismo — nunca sobre "el
+        // registro que el índice activo apunte en este instante", que
+        // puede haber cambiado ya (por ejemplo, justo después de crear
+        // un registro nuevo).
+        const currentRecord = findRecordById(activeFormId, renderedRecordId);
         if (!currentRecord) return;
 
         inputs.forEach(input => {
             currentRecord[input.dataset.name] = input.type === 'checkbox' ? input.checked : input.value;
         });
+    }
+
+    function saveCurrentRecordExplicit() {
+        saveCurrentRuntimeData();
+        const btn = document.getElementById('save-btn');
+        if (!btn) return;
+        const original = btn.innerHTML;
+        btn.classList.add('btn-saved');
+        btn.innerHTML = `<svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Guardado`;
+        setTimeout(() => {
+            btn.classList.remove('btn-saved');
+            btn.innerHTML = original;
+        }, 1100);
+    }
+
+    function clearCurrentRecord() {
+        if (!activeFormId || renderedRecordId === null) return;
+        const formObj = getForm(activeFormId);
+        const currentRecord = findRecordById(activeFormId, renderedRecordId);
+        if (!currentRecord) return;
+
+        const hasData = formObj.fields.some(f => {
+            const v = currentRecord[f.name];
+            return v !== undefined && v !== '' && v !== false;
+        });
+        if (hasData && !confirm('¿Borrar los datos de este registro? Esta acción no se puede deshacer.')) return;
+
+        formObj.fields.forEach(f => {
+            currentRecord[f.name] = f.type === 'checkbox' ? false : '';
+        });
+        renderRuntime();
     }
 
     function changeRecord(direction) {
@@ -1003,6 +1230,10 @@
     }
 
     function addNewRecord() {
+        // Guarda lo que hubiera en pantalla ANTES de crear el registro
+        // nuevo, y solo después crea uno en blanco. renderRuntime() no
+        // vuelve a guardar por su cuenta, así que el registro nuevo
+        // siempre nace vacío, nunca con una copia del anterior.
         saveCurrentRuntimeData();
         const formObj = getForm(activeFormId);
 
@@ -1019,6 +1250,7 @@
         const list = getVisibleRecords(formObj.id);
         activeIndexByForm[formObj.id] = list.length - 1;
         resetDescendantIndices(formObj.id);
+        viewMode = 'record';
         renderRuntime();
     }
 
