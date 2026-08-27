@@ -3,87 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataForge Mini - Gestor Dinámico de Datos</title>
+    <title>DataForge Studio</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Librería SheetJS para leer archivos Excel (.xlsx, .xls) y CSV -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>DataForge Mini</h1>
-        <p class="subtitle">Crea esquemas, importa desde Excel, llena matrices dinámicas y deriva sub-bases estilo AppSheet.</p>
-        
-        <!-- Sección 0: Importar desde Excel / CSV (Opcional) -->
-        <section id="import-section" class="card">
-            <h2>0. ¿Tienes un Excel? (Opcional)</h2>
-            <p>Sube un archivo para autodetectar columnas, hojas y datos instantáneamente:</p>
-            <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv">
-            <div id="sheet-selector-container" class="hidden" style="margin-top: 10px;">
-                <label for="sheet-select">Selecciona la hoja:</label>
-                <select id="sheet-select"></select>
-                <button id="load-sheet-btn" class="btn-secondary">Cargar Hoja</button>
+    <div class="app-container">
+        <!-- Sidebar de Navegación -->
+        <aside class="sidebar">
+            <div class="app-brand">
+                <h2>⚡ DataForge</h2>
+                <span>Studio v1.0</span>
             </div>
-        </section>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-target="view-dashboard">📊 Dashboard</button>
+                <button class="nav-item" data-target="view-schema">⚙️ Esquema & Carga</button>
+                <button class="nav-item" data-target="view-data">📋 Matriz de Datos</button>
+                <button class="nav-item" data-target="view-pivot">🔍 Motor Pivote</button>
+            </nav>
+        </aside>
 
-        <!-- Sección 1: Definir Estructura de la Base Principal -->
-        <section id="schema-builder" class="card">
-            <h2>1. Definir Estructura de la Base Principal</h2>
-            <div class="form-group">
-                <input type="text" id="col-name" placeholder="Nombre de columna (ej. Producto, Stock)">
-                <select id="col-type">
-                    <option value="string">Texto</option>
-                    <option value="number">Número</option>
-                    <option value="date">Fecha</option>
-                    <option value="boolean">Booleano (Sí/No)</option>
-                </select>
-                <button id="add-col-btn" class="btn-primary">Añadir Columna</button>
-            </div>
-            
-            <div class="schema-preview">
-                <h3>Columnas añadidas:</h3>
-                <ul id="columns-list" class="badge-list">
-                    <em>Aún no hay columnas definidas.</em>
-                </ul>
-            </div>
-            
-            <button id="create-table-btn" class="btn-primary" style="margin-top: 15px;">Generar Matriz de Datos</button>
-        </section>
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="page-title">Dashboard General</h1>
+                <div class="user-badge">Luis</div>
+            </header>
 
-        <!-- Sección 2: Vista de Llenado de Datos -->
-        <section id="data-view" class="card hidden">
-            <h2>2. Llenado y Visualización de Datos</h2>
-            <div class="table-responsive">
-                <div id="table-container"></div>
-            </div>
-            <div class="actions-row" style="margin-top: 15px;">
-                <button id="add-row-btn" class="btn-secondary">Añadir Fila</button>
-                <button id="open-pivot-btn" class="btn-success">Derivar Nueva Base de Datos (Pivote)</button>
-            </div>
-        </section>
+            <div class="view-container">
+                <!-- Vista 1: Dashboard -->
+                <section id="view-dashboard" class="app-view">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Registros Totales</h3>
+                            <p id="stat-records">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Columnas Activas</h3>
+                            <p id="stat-columns">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Sub-bases Derivadas</h3>
+                            <p id="stat-derived">0</p>
+                        </div>
+                    </div>
+                    <div class="welcome-banner">
+                        <h2>Bienvenido a DataForge Studio</h2>
+                        <p>Crea, modela, importa tus hojas de cálculo y genera bases de datos derivadas con reglas personalizadas.</p>
+                        <button class="btn btn-primary" onclick="switchView('view-schema')">Comenzar a Crear</button>
+                    </div>
+                </section>
 
-        <!-- Sección 3: Motor de Derivación / Pivotes -->
-        <section id="pivot-view" class="card hidden">
-            <h2>3. Motor de Derivación (Pivotes y Sub-bases)</h2>
-            <div class="pivot-controls">
-                <p>Registros detectados en la base principal: <strong id="record-count">0</strong></p>
-                
-                <div class="form-group">
-                    <label for="pivot-filter-col" style="align-self: center;">Filtrar por Columna:</label>
-                    <select id="pivot-filter-col"></select>
-                    <input type="text" id="pivot-filter-val" placeholder="Valor condición (ej. Activo, 100)">
-                </div>
+                <!-- Vista 2: Esquema e Importación -->
+                <section id="view-schema" class="app-view hidden">
+                    <div class="card-grid">
+                        <div class="card">
+                            <h2>Importar Fuente (Excel / CSV)</h2>
+                            <p>Sube un archivo existente para estructurar la base automáticamente.</p>
+                            <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv">
+                            <div id="sheet-selector-container" class="hidden" style="margin-top: 15px;">
+                                <label>Selecciona la hoja:</label>
+                                <select id="sheet-select"></select>
+                                <button id="load-sheet-btn" class="btn btn-success" style="margin-top: 10px;">Cargar Hoja</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h2>Diseñar Esquema Manual</h2>
+                            <div class="form-group">
+                                <input type="text" id="col-name" placeholder="Nombre de columna">
+                                <select id="col-type">
+                                    <option value="string">Texto</option>
+                                    <option value="number">Número</option>
+                                    <option value="date">Fecha</option>
+                                    <option value="boolean">Booleano</option>
+                                </select>
+                            </div>
+                            <button id="add-col-btn" class="btn btn-secondary">Añadir Columna</button>
+                            <ul id="columns-list" class="tag-list"></ul>
+                            <button id="create-table-btn" class="btn btn-primary" style="margin-top: 15px;">Generar Matriz</button>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="form-group">
-                    <input type="text" id="new-child-name" placeholder="Nombre de la nueva Base Derivada">
-                    <button id="generate-child-btn" class="btn-primary">Crear y Visualizar Sub-base</button>
-                </div>
+                <!-- Vista 3: Matriz de Datos -->
+                <section id="view-data" class="app-view hidden">
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h2>Matriz de Datos Principal</h2>
+                            <div>
+                                <button id="add-row-btn" class="btn btn-secondary">+ Añadir Fila</button>
+                                <button onclick="switchView('view-pivot')" class="btn btn-success">Ir a Pivotes ➔</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <div id="table-container"><em>No hay datos cargados aún.</em></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Vista 4: Motor Pivote -->
+                <section id="view-pivot" class="app-view hidden">
+                    <div class="card full-width">
+                        <h2>Motor de Derivación Dinámica</h2>
+                        <div class="pivot-builder-box">
+                            <div class="form-group">
+                                <label>Columna de Filtro:</label>
+                                <select id="pivot-filter-col"></select>
+                                <input type="text" id="pivot-filter-val" placeholder="Valor a buscar (ej. Activo)">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="new-child-name" placeholder="Nombre de la nueva Sub-base">
+                                <button id="generate-child-btn" class="btn btn-primary">Generar Sub-base</button>
+                            </div>
+                        </div>
+                        <div id="child-table-container" style="margin-top: 20px;"></div>
+                    </div>
+                </section>
             </div>
-
-            <!-- Contenedor donde se renderizará la tabla hija derivada -->
-            <div id="child-table-container" style="margin-top: 20px;"></div>
-        </section>
+        </main>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>
