@@ -1,264 +1,171 @@
-// Estado global de la aplicación
 const state = {
     parentColumns: [],
     parentData: [],
-    workbookData: null,
+    derivedCount: 0,
     workbookInstance: null
 };
 
-// Referencias del DOM
-const colNameInput = document.getElementById('col-name');
-const colTypeSelect = document.getElementById('col-type');
-const addColBtn = document.getElementById('add-col-btn');
-const columnsList = document.getElementById('columns-list');
-const createTableBtn = document.getElementById('create-table-btn');
-const schemaBuilder = document.getElementById('schema-builder');
-const dataView = document.getElementById('data-view');
-const tableContainer = document.getElementById('table-container');
-const openPivotBtn = document.getElementById('open-pivot-btn');
-const pivotView = document.getElementById('pivot-view');
+// Navegación tipo SPA
+const navItems = document.querySelectorAll('.nav-item');
+const views = document.querySelectorAll('.app-view');
+const pageTitle = document.getElementById('page-title');
 
-// Excel / CSV Importer DOM
-const excelFileInput = document.getElementById('excel-file-input');
-const sheetSelectorContainer = document.getElementById('sheet-selector-container');
-const sheetSelect = document.getElementById('sheet-select');
-const loadSheetBtn = document.getElementById('load-sheet-btn');
+function switchView(targetId) {
+    views.forEach(v => v.classList.add('hidden'));
+    document.getElementById(targetId).classList.remove('hidden');
 
-// 1. Añadir columna manual al esquema principal
-addColBtn.addEventListener('click', () => {
-    const name = colNameInput.value.trim();
-    const type = colTypeSelect.value;
-    
-    if (!name) return alert('Ingresa un nombre para la columna');
-    
+    navItems.forEach(btn => {
+        if (btn.getAttribute('data-target') === targetId) {
+            btn.classList.add('active');
+            pageTitle.textContent = btn.textContent.trim().replace(/^[^\w\s]+/, '').trim();
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    updateStats();
+}
+
+navItems.forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.getAttribute('data-target')));
+});
+
+function updateStats() {
+    document.getElementById('stat-records').textContent = document.querySelectorAll('#table-body tr').length || state.parentData.length;
+    document.getElementById('stat-columns').textContent = state.parentColumns.length;
+    document.getElementById('stat-derived').textContent = state.derivedCount;
+}
+
+// Lógica de Columnas y Matriz
+document.getElementById('add-col-btn').addEventListener('click', () => {
+    const name = document.getElementById('col-name').value.trim();
+    const type = document.getElementById('col-type').value;
+    if (!name) return alert('Ingresa un nombre');
     state.parentColumns.push({ name, type });
-    colNameInput.value = '';
+    document.getElementById('col-name').value = '';
     renderColumnsList();
 });
 
 function renderColumnsList() {
+    const list = document.getElementById('columns-list');
     if (state.parentColumns.length === 0) {
-        columnsList.innerHTML = '<em>Aún no hay columnas definidas.</em>';
+        list.innerHTML = '<em>Sin columnas</em>';
         return;
     }
-    columnsList.innerHTML = '';
-    state.parentColumns.forEach((col) => {
-        const li = document.createElement('li');
-        li.textContent = `${col.name} (${col.type})`;
-        columnsList.appendChild(li);
-    });
+    list.innerHTML = state.parentColumns.map(c => `<li>${c.name} (${c.type})</li>`).join('');
 }
 
-// 2. Generar la matriz editable (Filas x Columnas)
-createTableBtn.addEventListener('click', () => {
-    if (state.parentColumns.length === 0) return alert('Define al menos una columna primero.');
-    
-    schemaBuilder.classList.add('hidden');
-    document.getElementById('import-section').classList.add('hidden');
-    dataView.classList.remove('hidden');
-    
+document.getElementById('create-table-btn').addEventListener('click', () => {
+    if (state.parentColumns.length === 0) return alert('Define columnas primero');
     renderEditableTable();
+    switchView('view-data');
 });
 
-function renderEditableTable(existingData = null) {
+function renderEditableTable(data = null) {
     let html = '<table><thead><tr>';
-    state.parentColumns.forEach(col => {
-        html += `<th>${col.name}</th>`;
-    });
+    state.parentColumns.forEach(c => html += `<th>${c.name}</th>`);
     html += '<th>Acciones</th></tr></thead><tbody id="table-body">';
-    
-    if (existingData && existingData.length > 0) {
-        existingData.forEach(row => {
-            html += generateRowHtmlWithValues(row);
-        });
-    } else {
-        // Generar 3 filas vacías iniciales por defecto
-        for (let i = 0; i < 3; i++) {
-            html += generateRowHtml();
-        }
-    }
-    
+
+    const rowsToGen = data || [{}, {}, {}];
+    rowsToGen.forEach(row => html += generateRowHtml(row));
     html += '</tbody></table>';
-    tableContainer.innerHTML = html;
+    
+    document.getElementById('table-container').innerHTML = html;
+    updateStats();
 }
 
 function generateRowHtml(values = {}) {
-    let rowHtml = '<tr>';
+    let html = '<tr>';
     state.parentColumns.forEach(col => {
-        let inputType = 'text';
-        if (col.type === 'number') inputType = 'number';
-        if (col.type === 'date') inputType = 'date';
-        
         const val = values[col.name] !== undefined ? values[col.name] : '';
-        
+        const inputType = col.type === 'number' ? 'number' : (col.type === 'date' ? 'date' : 'text');
         if (col.type === 'boolean') {
-            const checked = val ? 'checked' : '';
-            rowHtml += `<td><input type="checkbox" class="cell-input" ${checked}></td>`;
+            html += `<td><input type="checkbox" class="cell-input" ${val ? 'checked' : ''}></td>`;
         } else {
-            rowHtml += `<td><input type="${inputType}" class="cell-input" value="${val}"></td>`;
+            html += `<td><input type="${inputType}" class="cell-input" value="${val}"></td>`;
         }
     });
-    rowHtml += '<td><button class="btn-secondary" onclick="this.closest(\'tr\').remove()" style="padding: 5px 10px;">Eliminar</button></td></tr>';
-    return rowHtml;
-}
-
-function generateRowHtmlWithValues(rowObj) {
-    return generateRowHtml(rowObj);
+    html += `<td><button class="btn btn-secondary" style="padding:4px 8px;" onclick="this.closest('tr').remove(); updateStats();">X</button></td></tr>`;
+    return html;
 }
 
 document.getElementById('add-row-btn').addEventListener('click', () => {
-    const tbody = document.getElementById('table-body');
-    tbody.insertAdjacentHTML('beforeend', generateRowHtml());
+    document.getElementById('table-body').insertAdjacentHTML('beforeend', generateRowHtml());
+    updateStats();
 });
 
-// 3. Importar archivo Excel o CSV usando SheetJS
-excelFileInput.addEventListener('change', (e) => {
+// Importar Excel
+const excelInput = document.getElementById('excel-file-input');
+excelInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (event) => {
-        try {
-            const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            state.workbookInstance = workbook;
-
-            // Mostrar selector de hojas si hay múltiples
-            sheetSelect.innerHTML = '';
-            workbook.SheetNames.forEach(sheetName => {
-                const opt = document.createElement('option');
-                opt.value = sheetName;
-                opt.textContent = sheetName;
-                sheetSelect.appendChild(opt);
-            });
-
-            sheetSelectorContainer.classList.remove('hidden');
-        } catch (error) {
-            alert('Error al leer el archivo. Asegúrate de que sea un Excel o CSV válido.');
-            console.error(error);
-        }
+    reader.onload = (ev) => {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+        state.workbookInstance = wb;
+        const select = document.getElementById('sheet-select');
+        select.innerHTML = wb.SheetNames.map(s => `<option value="${s}">${s}</option>`).join('');
+        document.getElementById('sheet-selector-container').classList.remove('hidden');
     };
     reader.readAsArrayBuffer(file);
 });
 
-loadSheetBtn.addEventListener('click', () => {
-    const selectedSheetName = sheetSelect.value;
-    const worksheet = state.workbookInstance.Sheets[selectedSheetName];
-    
-    // Convertir hoja a JSON (matriz de filas/columnas)
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-    if (jsonData.length === 0) return alert('La hoja seleccionada está vacía.');
+document.getElementById('load-sheet-btn').addEventListener('click', () => {
+    const sheetName = document.getElementById('sheet-select').value;
+    const ws = state.workbookInstance.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (json.length === 0) return alert('Hoja vacía');
 
-    // La primera fila se asume como nombres de columnas
-    const rawHeaders = jsonData[0];
-    state.parentColumns = rawHeaders.map(header => ({
-        name: String(header || 'Columna'),
-        type: 'string' // Inferencia base como texto
-    }));
-
-    renderColumnsList();
-
-    // Procesar las filas de datos siguientes
-    state.parentData = [];
-    for (let i = 1; i < jsonData.length; i++) {
-        const rowArr = jsonData[i];
-        if (rowArr.length === 0) continue;
-        const rowObj = {};
-        state.parentColumns.forEach((col, index) => {
-            rowObj[col.name] = rowArr[index] !== undefined ? rowArr[index] : '';
-        });
-        state.parentData.push(rowObj);
-    }
-
-    // Ocultar sección de importación, mostrar esquema e ir directo a la matriz con datos precargados
-    document.getElementById('import-section').classList.add('hidden');
-    schemaBuilder.classList.add('hidden');
-    dataView.classList.remove('hidden');
-
-    renderEditableTable(state.parentData);
-    alert(`¡Hoja "${selectedSheetName}" cargada con éxito (${state.parentData.length} registros)!`);
-});
-
-// 4. Activar vista de pivote / derivación
-openPivotBtn.addEventListener('click', () => {
-    collectParentDataFromDOM();
-
-    if (state.parentData.length === 0) {
-        return alert('No hay datos en la matriz principal para derivar.');
-    }
-
-    document.getElementById('record-count').textContent = state.parentData.length;
-
-    // Rellenar selector de columnas para filtro pivote
-    const filterColSelect = document.getElementById('pivot-filter-col');
-    filterColSelect.innerHTML = '';
-    state.parentColumns.forEach(col => {
-        const opt = document.createElement('option');
-        opt.value = col.name;
-        opt.textContent = col.name;
-        filterColSelect.appendChild(opt);
+    state.parentColumns = json[0].map(h => ({ name: String(h || 'Col'), type: 'string' }));
+    state.parentData = json.slice(1).map(row => {
+        const obj = {};
+        state.parentColumns.forEach((col, i) => obj[col.name] = row[i] !== undefined ? row[i] : '');
+        return obj;
     });
 
-    pivotView.classList.remove('hidden');
+    renderEditableTable(state.parentData);
+    switchView('view-data');
 });
 
-function collectParentDataFromDOM() {
+// Motor Pivote / Derivación
+document.querySelector('[data-target="view-pivot"]').addEventListener('click', () => {
+    collectDOMData();
+    const sel = document.getElementById('pivot-filter-col');
+    sel.innerHTML = state.parentColumns.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+});
+
+function collectDOMData() {
     const rows = document.querySelectorAll('#table-body tr');
     state.parentData = [];
-    
     rows.forEach(row => {
         const inputs = row.querySelectorAll('.cell-input');
-        const rowData = {};
-        state.parentColumns.forEach((col, index) => {
-            const input = inputs[index];
-            if (col.type === 'boolean') {
-                rowData[col.name] = input.checked;
-            } else {
-                rowData[col.name] = input.value;
-            }
+        const obj = {};
+        state.parentColumns.forEach((col, i) => {
+            obj[col.name] = col.type === 'boolean' ? inputs[i].checked : inputs[i].value;
         });
-        state.parentData.push(rowData);
+        state.parentData.push(obj);
     });
 }
 
-// Motor lógico para generar la sub-base derivada
 document.getElementById('generate-child-btn').addEventListener('click', () => {
-    collectParentDataFromDOM();
-
-    const childName = document.getElementById('new-child-name').value.trim() || 'SubBase_Derivada';
+    collectDOMData();
     const filterCol = document.getElementById('pivot-filter-col').value;
     const filterVal = document.getElementById('pivot-filter-val').value.trim().toLowerCase();
+    const childName = document.getElementById('new-child-name').value.trim() || 'SubBase';
 
-    // Filtrar los datos principales basados en el pivote condicional
-    const filteredData = state.parentData.filter(row => {
-        if (!filterVal) return true; // Si está vacío, pasa todo
-        const cellValue = String(row[filterCol] || '').toLowerCase();
-        return cellValue.includes(filterVal);
-    });
-
-    const childContainer = document.getElementById('child-table-container');
+    const filtered = state.parentData.filter(r => !filterVal || String(r[filterCol] || '').toLowerCase().includes(filterVal));
     
-    if (filteredData.length === 0) {
-        childContainer.innerHTML = `<p style="color: #e74c3c;">No se encontraron registros que coincidan con el criterio pivote en la columna <strong>${filterCol}</strong>.</p>`;
-        return;
-    }
+    state.derivedCount++;
+    updateStats();
 
-    // Renderizar la tabla hija resultante
-    let childHtml = `<h3>Resultado: ${childName} (${filteredData.length} registros filtrados)</h3>`;
-    childHtml += '<table><thead><tr>';
-    state.parentColumns.forEach(col => {
-        childHtml += `<th>${col.name}</th>`;
+    let html = `<h3>Sub-base: ${childName} (${filtered.length} filas)</h3><table><thead><tr>`;
+    state.parentColumns.forEach(c => html += `<th>${c.name}</th>`);
+    html += '</tr></thead><tbody>';
+    filtered.forEach(r => {
+        html += '<tr>';
+        state.parentColumns.forEach(c => html += `<td>${r[c.name]}</td>`);
+        html += '</tr>';
     });
-    childHtml += '</tr></thead><tbody>';
+    html += '</tbody></table>';
 
-    filteredData.forEach(row => {
-        childHtml += '<tr>';
-        state.parentColumns.forEach(col => {
-            childHtml += `<td>${row[col.name]}</td>`;
-        });
-        childHtml += '</tr>';
-    });
-
-    childHtml += '</tbody></table>';
-    childContainer.innerHTML = childHtml;
+    document.getElementById('child-table-container').innerHTML = html;
 });
