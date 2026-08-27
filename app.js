@@ -1,4 +1,5 @@
-const state = { cols: [], data: [], wb: null };
+let state = { cols: [], data: [], wb: null };
+let currentIndex = 0;
 
 function goTo(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -15,7 +16,7 @@ document.querySelectorAll('.dock-btn').forEach(btn => {
     btn.addEventListener('click', () => goTo(btn.dataset.view));
 });
 
-// Columnas
+// Estructura y Columnas
 document.getElementById('add-col-btn').addEventListener('click', () => {
     const name = document.getElementById('col-name').value.trim();
     const type = document.getElementById('col-type').value;
@@ -33,39 +34,74 @@ function renderChips() {
 }
 
 document.getElementById('create-table-btn').addEventListener('click', () => {
-    renderTable();
+    currentIndex = 0;
+    state.data = [{}];
+    renderFormView();
     goTo('data');
 });
 
-function renderTable(customData = null) {
-    let html = '<table><thead><tr>';
-    state.cols.forEach(c => html += `<th>${c.name}</th>`);
-    html += '<th></th></tr></thead><tbody id="tbody">';
-    
-    const rows = customData || [{}, {}, {}];
-    rows.forEach(r => html += rowHtml(r));
-    html += '</tbody></table>';
-    
-    document.getElementById('table-container').innerHTML = html;
-}
+// Vista de Formularios
+function renderFormView() {
+    if (state.data.length === 0) state.data = [{}];
+    if (currentIndex >= state.data.length) currentIndex = state.data.length - 1;
+    if (currentIndex < 0) currentIndex = 0;
 
-function rowHtml(vals = {}) {
-    let h = '<tr>';
+    const record = state.data[currentIndex] || {};
+    const container = document.getElementById('form-card');
+    
+    let html = '';
     state.cols.forEach(c => {
-        const v = vals[c.name] !== undefined ? vals[c.name] : '';
+        const val = record[c.name] !== undefined ? record[c.name] : '';
         const t = c.type === 'number' ? 'number' : (c.type === 'date' ? 'date' : 'text');
-        h += c.type === 'boolean' 
-            ? `<td><input type="checkbox" class="cell" ${v?'checked':''}></td>`
-            : `<td><input type="${t}" class="cell" value="${v}"></td>`;
+        
+        html += `<div class="form-field"><label>${c.name} (${c.type})</label>`;
+        if (c.type === 'boolean') {
+            html += `<input type="checkbox" class="cell" data-col="${c.name}" ${val ? 'checked' : ''}>`;
+        } else {
+            html += `<input type="${t}" class="cell" data-col="${c.name}" value="${val}">`;
+        }
+        html += `</div>`;
     });
-    return h + `<td><button class="btn" onclick="this.closest('tr').remove()">×</button></td></tr>`;
+    
+    container.innerHTML = html;
+    document.getElementById('record-indicator').textContent = `${currentIndex + 1} / ${state.data.length}`;
 }
 
-document.getElementById('add-row-btn').addEventListener('click', () => {
-    document.getElementById('tbody').insertAdjacentHTML('beforeend', rowHtml());
+function saveCurrentForm() {
+    if (state.data.length === 0) return;
+    const inputs = document.querySelectorAll('#form-card .cell');
+    const obj = {};
+    inputs.forEach(input => {
+        const colName = input.dataset.col;
+        obj[colName] = input.type === 'checkbox' ? input.checked : input.value;
+    });
+    state.data[currentIndex] = obj;
+}
+
+document.getElementById('next-row-btn').addEventListener('click', () => {
+    saveCurrentForm();
+    if (currentIndex < state.data.length - 1) {
+        currentIndex++;
+        renderFormView();
+    }
 });
 
-// Excel
+document.getElementById('prev-row-btn').addEventListener('click', () => {
+    saveCurrentForm();
+    if (currentIndex > 0) {
+        currentIndex--;
+        renderFormView();
+    }
+});
+
+document.getElementById('add-form-btn').addEventListener('click', () => {
+    saveCurrentForm();
+    state.data.push({});
+    currentIndex = state.data.length - 1;
+    renderFormView();
+});
+
+// Importar Excel
 document.getElementById('excel-file-input').addEventListener('change', e => {
     const reader = new FileReader();
     reader.onload = ev => {
@@ -81,7 +117,8 @@ document.getElementById('excel-file-input').addEventListener('change', e => {
             return obj;
         });
 
-        renderTable(state.data);
+        currentIndex = 0;
+        renderFormView();
         goTo('data');
     };
     reader.readAsArrayBuffer(e.target.files[0]);
@@ -89,25 +126,13 @@ document.getElementById('excel-file-input').addEventListener('change', e => {
 
 // Pivotes
 function initPivot() {
-    collectDOM();
+    saveCurrentForm();
     const sel = document.getElementById('pivot-filter-col');
     sel.innerHTML = state.cols.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
 }
 
-function collectDOM() {
-    state.data = [];
-    document.querySelectorAll('#tbody tr').forEach(row => {
-        const inputs = row.querySelectorAll('.cell');
-        const obj = {};
-        state.cols.forEach((c, i) => {
-            obj[c.name] = c.type === 'boolean' ? inputs[i].checked : inputs[i].value;
-        });
-        state.data.push(obj);
-    });
-}
-
 document.getElementById('generate-child-btn').addEventListener('click', () => {
-    collectDOM();
+    saveCurrentForm();
     const col = document.getElementById('pivot-filter-col').value;
     const val = document.getElementById('pivot-filter-val').value.trim().toLowerCase();
     
